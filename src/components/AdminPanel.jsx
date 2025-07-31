@@ -4,14 +4,16 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const AdminPanel = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const [activeTab, setActiveTab] = useState("requests");
-  const [users, setUsers] = useState([]);
-  const [expandedId, setExpandedId] = useState(null);
   const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET;
 
-  const fetchData = async (type) => {
+  const [activeRole, setActiveRole] = useState("deliveryboy"); // or 'dhobi'
+  const [activeTab, setActiveTab] = useState("requests"); // 'all' | 'requests' | 'rejected'
+  const [users, setUsers] = useState([]);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const fetchData = async (role, tab) => {
     let endpoint = "";
-    switch (type) {
+    switch (tab) {
       case "all": endpoint = "all"; break;
       case "requests": endpoint = "pending"; break;
       case "rejected": endpoint = "rejected"; break;
@@ -19,7 +21,7 @@ const AdminPanel = () => {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/deliveryboy/${endpoint}`, {
+      const res = await fetch(`${API_BASE_URL}/${role}/${endpoint}`, {
         headers: {
           Authorization: `Bearer ${ADMIN_SECRET}`,
         },
@@ -38,7 +40,7 @@ const AdminPanel = () => {
 
   const handleApprove = async (id) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/deliveryboy/approve/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/${activeRole}/approve/${id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${ADMIN_SECRET}`,
@@ -47,7 +49,7 @@ const AdminPanel = () => {
       const data = await res.json();
       if (res.ok) {
         toast.success("Approved");
-        fetchData(activeTab);
+        fetchData(activeRole, activeTab);
       } else {
         toast.error(data.message);
       }
@@ -58,7 +60,7 @@ const AdminPanel = () => {
 
   const handleReject = async (id) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/deliveryboy/reject/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/${activeRole}/reject/${id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${ADMIN_SECRET}`,
@@ -67,7 +69,7 @@ const AdminPanel = () => {
       const data = await res.json();
       if (res.ok) {
         toast.success("Rejected");
-        fetchData(activeTab);
+        fetchData(activeRole, activeTab);
       } else {
         toast.error(data.message);
       }
@@ -77,25 +79,47 @@ const AdminPanel = () => {
   };
 
   useEffect(() => {
-    fetchData(activeTab);
-  }, [activeTab]);
+    fetchData(activeRole, activeTab);
+  }, [activeRole, activeTab]);
 
   const toggleExpand = (id) => {
     setExpandedId(prev => (prev === id ? null : id));
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
+    <div className="min-h-screen flex bg-gray-100">
       <ToastContainer />
-      <h1 className="text-2xl font-bold text-center mb-6">Hello, Admin</h1>
+      
+      {/* Sidebar */}
+      <aside className="w-60 bg-white shadow p-4 space-y-4">
+        <h2 className="text-xl font-bold text-blue-600 mb-4">Admin Panel</h2>
+        <div>
+          <p className="font-semibold mb-2">Sections</p>
+          <button
+            onClick={() => setActiveRole("deliveryboy")}
+            className={`block w-full text-left px-3 py-2 rounded ${activeRole === "deliveryboy" ? "bg-blue-600 text-white" : "hover:bg-gray-100"}`}
+          >
+            📦 Delivery Boys
+          </button>
+          <button
+            onClick={() => setActiveRole("dhobi")}
+            className={`block w-full text-left px-3 py-2 rounded ${activeRole === "dhobi" ? "bg-blue-600 text-white" : "hover:bg-gray-100"}`}
+          >
+            🧺 Dhobis
+          </button>
+        </div>
+      </aside>
 
-      {/* Tabs */}
-      <div className=" flex justify-center  space-x-4 mb-6 ">
-        <div className="inline-flex overflow-x-auto space-x-3">
+      {/* Main Content */}
+      <main className="flex-1 p-6">
+        <h1 className="text-2xl font-bold mb-6">Manage {activeRole === "deliveryboy" ? "Delivery Boys" : "Dhobi Professionals"}</h1>
+
+        {/* Tabs */}
+        <div className="flex space-x-3 mb-6">
           {["all", "requests", "rejected"].map((tab) => (
             <button
               key={tab}
-              className={`shrink-0 px-4 py-1.5 rounded text-sm whitespace-nowrap ${activeTab === tab ? "bg-blue-600 text-white" : "bg-white border"}`}
+              className={`px-4 py-2 rounded ${activeTab === tab ? "bg-blue-600 text-white" : "bg-white border"}`}
               onClick={() => setActiveTab(tab)}
             >
               {tab === "all" && "All Users"}
@@ -104,65 +128,64 @@ const AdminPanel = () => {
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Cards */}
-      <div className="max-w-2xl mx-auto space-y-4">
-        {users.length === 0 ? (
-          <p className="text-center text-gray-500">No data.</p>
-        ) : (
-          users.map((user) => {
-            const isExpanded = expandedId === user._id;
-            return (
-              <div key={user._id} className="bg-white rounded shadow p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold text-lg">{user.name}</p>
-                    <p className="text-sm text-gray-600">{user.email} | {user.phone}</p>
+        {/* Cards */}
+        <div className="space-y-4 max-w-2xl">
+          {users.length === 0 ? (
+            <p className="text-gray-500 text-center">No users found.</p>
+          ) : (
+            users.map((user) => {
+              const isExpanded = expandedId === user._id;
+              return (
+                <div key={user._id} className="bg-white p-4 rounded shadow">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold text-lg">{user.name}</p>
+                      <p className="text-sm text-gray-600">{user.email} | {user.phone}</p>
+                    </div>
+                    {activeTab === "requests" && (
+                      <div className="space-x-2">
+                        <button
+                          onClick={() => handleApprove(user._id)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(user._id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
                   </div>
 
-                  {activeTab === "requests" && (
-                    <div className="space-x-2">
-                      <button
-                        onClick={() => handleApprove(user._id)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleReject(user._id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-                      >
-                        Reject
-                      </button>
+                  {/* Expanded details */}
+                  {isExpanded && (
+                    <div className="mt-3 text-sm text-gray-700 space-y-1">
+                      <p><span className="font-medium">Email:</span> {user.email}</p>
+                      <p><span className="font-medium">Phone:</span> {user.phone}</p>
+                      <p><span className="font-medium">Approved:</span> {user.approved ? "Yes" : "No"}</p>
+                      <p><span className="font-medium">Rejected:</span> {user.rejected ? "Yes" : "No"}</p>
+                      <p><span className="font-medium">ID:</span> {user._id}</p>
                     </div>
                   )}
-                </div>
 
-                {/* Expanded Details */}
-                {isExpanded && (
-                  <div className="mt-4 text-sm text-gray-700 space-y-1">
-                    <p><span className="font-medium">Email:</span> {user.email}</p>
-                    <p><span className="font-medium">Phone:</span> {user.phone}</p>
-                    <p><span className="font-medium">Approved:</span> {user.approved ? "Yes" : "No"}</p>
-                    <p><span className="font-medium">Rejected:</span> {user.rejected ? "Yes" : "No"}</p>
-                    <p><span className="font-medium">ID:</span> {user._id}</p>
+                  <div className="text-right mt-2">
+                    <button
+                      onClick={() => toggleExpand(user._id)}
+                      className="text-blue-600 text-sm hover:underline"
+                    >
+                      {isExpanded ? "Show Less" : "Show More"}
+                    </button>
                   </div>
-                )}
-
-                <div className="text-right mt-2">
-                  <button
-                    onClick={() => toggleExpand(user._id)}
-                    className="text-blue-600 text-sm hover:underline"
-                  >
-                    {isExpanded ? "Show Less" : "Show More "}
-                  </button>
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
+      </main>
     </div>
   );
 };

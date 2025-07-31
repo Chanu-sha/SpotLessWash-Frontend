@@ -140,8 +140,9 @@ export default function Orders() {
             <h2 className="text-lg font-bold mb-4">Order Details</h2>
             <div className="space-y-2 text-sm text-gray-700">
               <p>
-                <strong>Order ID:</strong> {selectedOrder._id.slice(-6)}
+                <strong>Delivery OTP:</strong> {selectedOrder.otp}
               </p>
+
               <p>
                 <strong>Date:</strong> {formatDate(selectedOrder.date)}
               </p>

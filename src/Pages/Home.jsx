@@ -47,12 +47,12 @@ export default function Home() {
               <PiCalendarDuotone className="text-green-600" />
               Schedule a Pickup
             </li>
-            <span  className="ml-1.5 text-gray-500" >|</span>
+            <span className="ml-1.5 text-gray-500">|</span>
             <li className="flex m-0 items-center gap-2">
               <PiCoatHangerLight className="text-green-600" />
               We wash & Iron Your Clothes
             </li>
-            <span  className="ml-1.5 text-gray-500" >|</span>
+            <span className="ml-1.5 text-gray-500">|</span>
             <li className="flex m-0 items-center gap-2">
               <PiTruckLight className="text-green-600" />
               Get Your Clothes Back
@@ -93,7 +93,9 @@ export default function Home() {
             <p className="text-sm text-gray-600">2 months ago</p>
           </div>
         </section>
-
+        <p className="text-center text-gray-500 text-xs mt-4">
+          Proudly made in Odisha ❤️
+        </p>
         <Footer />
       </div>
     </div>

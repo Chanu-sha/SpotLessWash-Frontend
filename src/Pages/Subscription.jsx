@@ -1,16 +1,21 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import for navigation
 import { FaArrowLeftLong } from "react-icons/fa6";
 
 export default function Subscription() {
   const [billingCycle, setBillingCycle] = useState("yearly");
   const [selectedPlan, setSelectedPlan] = useState("standard");
+  const navigate = useNavigate(); // Initialize navigate
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6">
       <div className="max-w-md mx-auto bg-white p-4 rounded-xl shadow-sm">
         {/* Header */}
         <div className="flex items-center space-x-4 mb-6">
-          <FaArrowLeftLong className="text-gray-700" />
+          <FaArrowLeftLong
+            className="text-gray-700 cursor-pointer"
+            onClick={() => navigate(-1)} // Go back to previous page
+          />
           <h1 className="text-lg font-bold text-gray-900">Subscription Plans</h1>
         </div>
 
@@ -64,7 +69,12 @@ export default function Subscription() {
             id: "premium",
             title: "Premium",
             price: "₹999",
-            features: ["Unlimited items", "Faster pickup", "24/7 support", "All features included"],
+            features: [
+              "Unlimited items",
+              "Faster pickup",
+              "24/7 support",
+              "All features included",
+            ],
           },
         ].map((plan) => (
           <div

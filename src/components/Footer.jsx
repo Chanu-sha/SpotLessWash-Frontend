@@ -11,7 +11,7 @@ export default function Footer() {
             <Link to="/about" className="hover:text-blue-600 font-medium">
               About Us
             </Link>
-            <Link to="/services" className="hover:text-blue-600 font-medium">
+            <Link to="/service" className="hover:text-blue-600 font-medium">
               Our Services
             </Link>
           </div>
@@ -30,7 +30,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="text-gray-500 text-center">
-          &copy; 2025 Cloth Care. All rights reserved.
+          &copy; 2025 Spot Less Wash. All rights reserved.
         </div>
       </div>
     </footer>

@@ -1,326 +1,198 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, googleProvider } from "../firebase";
-
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
-
-import Modal from "react-modal";
 import { ToastContainer, toast } from "react-toastify";
+import { FiUser, FiTruck, FiUserCheck, FiLock, FiArrowLeft } from "react-icons/fi";
 import "react-toastify/dist/ReactToastify.css";
 
-Modal.setAppElement("#root");
+import UserAuth from "./auth/UserAuth";
+import DeliveryAuth from "./auth/DeliveryAuth";
+import AdminAuth from "./auth/AdminAuth";
 
 const AuthComponent = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
   const navigate = useNavigate();
+
+  // Common states
+  const [activeRole, setActiveRole] = useState("user");
+  const [showDropdown, setShowDropdown] = useState(true);
+
+  // User states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const [modalType, setModalType] = useState(null);
+  // Shared delivery/dhobi form state
   const [deliveryForm, setDeliveryForm] = useState({
     name: "",
     email: "",
     phone: "",
     password: "",
   });
-  const [deliveryStatus, setDeliveryStatus] = useState(null);
+  const [deliveryStatus, setDeliveryStatus] = useState("login");
 
-  const [adminCreds, setAdminCreds] = useState({ username: "", password: "" });
+  // Admin credentials
+  const [adminCreds, setAdminCreds] = useState({
+    username: "",
+    password: "",
+  });
 
   const sendTokenToBackend = async (user) => {
-    const token = await user.getIdToken();
-    const res = await fetch(`${API_BASE_URL}/user/login`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-
-    if (data.user) {
-      toast.success("Login successful!");
-      if (!data.user.name || !data.user.phone || !data.user.address) {
-        toast.info("Complete your profile to proceed.");
-      }
-      navigate("/profile");
-    } else {
-      toast.error("Failed to sync user with backend");
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await sendTokenToBackend(result.user);
-    } catch (error) {
-      toast.error(`Google login failed: ${error.message}`);
-    }
-  };
+      const token = await user.getIdToken();
+      const res = await fetch(`${API_BASE_URL}/user/login`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
 
-  const handleEmailAuth = async () => {
-    if (!email || !password) return toast.error("Enter email & password");
-    try {
-      const result = isRegistering
-        ? await createUserWithEmailAndPassword(auth, email, password)
-        : await signInWithEmailAndPassword(auth, email, password);
-      await sendTokenToBackend(result.user);
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  // 📦 Delivery boy registration
-  const handleDeliveryRegister = async () => {
-    const res = await fetch(`${API_BASE_URL}/deliveryboy/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(deliveryForm),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      toast.success(data.message);
-      setDeliveryStatus("pending");
-    } else toast.error(data.message);
-  };
-
-  //  Delivery boy login
-  const handleDeliveryLogin = async () => {
-    const res = await fetch(`${API_BASE_URL}/deliveryboy/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(deliveryForm),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      toast.success("Login successful");
-      navigate("/delivery-dashboard");
-    } else {
-      toast.error(data.message);
-      if (data.message.includes("Not approved")) {
-        setDeliveryStatus("pending");
+      if (data.user) {
+        toast.success("Login successful!");
+        if (!data.user.name || !data.user.phone || !data.user.address) {
+          toast.info("Complete your profile to proceed.");
+        }
+        navigate("/profile");
+      } else {
+        toast.error("Failed to sync user with backend");
       }
+    } catch (error) {
+      toast.error("Error during backend login");
     }
   };
 
-  // Admin login
-  const handleAdminLogin = async () => {
-    const res = await fetch(`${API_BASE_URL}/admin/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(adminCreds),
-    });
+  const resetRole = () => {
+    setActiveRole("user");
+    setEmail("");
+    setPassword("");
+    setDeliveryForm({ name: "", email: "", phone: "", password: "" });
+    setAdminCreds({ username: "", password: "" });
+    setDeliveryStatus("login");
+    setIsRegistering(false);
+  };
 
-    if (res.ok) {
-      toast.success("Admin login successful");
-      navigate("/admin-panel");
-    } else {
-      toast.error("Invalid admin credentials");
-    }
+  const roleLabel = {
+    user: "User Login",
+    delivery: "Delivery Partner",
+    dhobi: "Dhobi Professional",
+    admin: "Admin Portal",
+  };
+
+  const roleIcons = {
+    user: <FiUser className="mr-2" />,
+    delivery: <FiTruck className="mr-2" />,
+    dhobi: <FiUserCheck className="mr-2" />,
+    admin: <FiLock className="mr-2" />,
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center ">
-      <ToastContainer />
-      <div className="w-full max-w-md  p-8 space-y-4">
-        <h2 className="text-2xl font-bold text-center text-gray-800">
-          {isRegistering ? "Register with Email" : "Login with Email"}
-        </h2>
+    <div className="min-h-screen max-w-md mx-auto">
+      <ToastContainer position="top-center" autoClose={3000} />
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full border px-4 py-2 rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full border px-4 py-2 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+      <div className="w-full max-w-md">
+        <div className="bg-white overflow-hidden">
+          {/* HEADER */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-white">
+            <div className="flex flex-col">
+              <div className="w-full flex items-center justify-between mb-4">
+                {activeRole !== "user" && (
+                  <button
+                    onClick={() => {
+                      resetRole();
+                      setShowDropdown(true);
+                    }}
+                    className="flex items-center text-sm px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-200 backdrop-blur-sm"
+                  >
+                    <FiArrowLeft className="mr-1" /> Back
+                  </button>
+                )}
 
-        <button
-          onClick={handleEmailAuth}
-          className="w-full bg-blue-600 text-white py-2 rounded"
-        >
-          {isRegistering ? "Register" : "Login"}
-        </button>
+                {showDropdown && (
+                  <div className="flex-1 max-w-[130px]">
+                    <select
+                      value={activeRole}
+                      onChange={(e) => {
+                        const role = e.target.value;
+                        setActiveRole(role);
+                        setDeliveryStatus("login");
+                        if (role !== "user") setShowDropdown(false);
+                      }}
+                      className="w-full px-3 py-1 bg-white/20 border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-white text-white"
+                    >
+                      <option value="user">User Login</option>
+                      <option value="delivery">Delivery Partner</option>
+                      <option value="dhobi">Dhobi Professional</option>
+                      <option value="admin">Admin Portal</option>
+                    </select>
+                  </div>
+                )}
+              </div>
 
-        <p className="text-sm text-center text-gray-600">
-          {isRegistering
-            ? "Already have an account?"
-            : "Don't have an account?"}
-          <button
-            onClick={() => setIsRegistering(!isRegistering)}
-            className="ml-1 text-blue-600 underline"
-          >
-            {isRegistering ? "Login" : "Register"}
-          </button>
-        </p>
+              {/* Title & subtitle */}
+              <div className="text-center">
+                <div className="flex justify-center items-center">
+                  {roleIcons[activeRole]}
+                  <h2 className="text-2xl font-bold">
+                    {activeRole === "user"
+                      ? isRegistering
+                        ? "Create Account"
+                        : "Welcome Back"
+                      : roleLabel[activeRole]}
+                  </h2>
+                </div>
+                <p className="text-blue-100 text-sm mt-1">
+                  {activeRole === "user"
+                    ? isRegistering
+                      ? "Join us today"
+                      : "Sign in to continue"
+                    : deliveryStatus === "register"
+                    ? "Register your account"
+                    : "Access your professional account"}
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <div className="flex gap-2">
-          <button
-            className="w-1/2 border py-1 rounded"
-            onClick={() => setModalType("delivery")}
-          >
-            Delivery Boy
-          </button>
-          <button
-            className="w-1/2 border py-1 rounded"
-            onClick={() => setModalType("admin")}
-          >
-            Admin
-          </button>
+          {/* BODY */}
+          <div className="p-6">
+            {activeRole === "user" && (
+              <UserAuth
+                email={email}
+                setEmail={setEmail}
+                password={password}
+                setPassword={setPassword}
+                isRegistering={isRegistering}
+                setIsRegistering={setIsRegistering}
+                sendTokenToBackend={sendTokenToBackend}
+              />
+            )}
+
+            {(activeRole === "delivery" || activeRole === "dhobi") && (
+              <DeliveryAuth
+                role={activeRole === "dhobi" ? "dhobi" : "deliveryboy"}
+                deliveryForm={deliveryForm}
+                setDeliveryForm={setDeliveryForm}
+                deliveryStatus={deliveryStatus}
+                setDeliveryStatus={setDeliveryStatus}
+                API_BASE_URL={API_BASE_URL}
+                navigate={navigate}
+              />
+            )}
+
+            {activeRole === "admin" && (
+              <AdminAuth
+                adminCreds={adminCreds}
+                setAdminCreds={setAdminCreds}
+                API_BASE_URL={API_BASE_URL}
+                navigate={navigate}
+              />
+            )}
+          </div>
+
+          {/* FOOTER */}
+          <div className="bg-gray-50 px-6 py-4 text-center text-xs text-gray-500">
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </div>
         </div>
-
-        <button
-          onClick={handleGoogleSignIn}
-          className="w-full flex items-center justify-center bg-white border py-2 rounded shadow"
-        >
-          <img
-            src="https://www.svgrepo.com/show/475656/google-color.svg"
-            className="w-5 h-5 mr-2"
-          />
-          Sign in with Google
-        </button>
       </div>
-
-      {/* 🚪 Delivery Boy Modal */}
-      <Modal
-        isOpen={modalType === "delivery"}
-        onRequestClose={() => setModalType(null)}
-        className="relative flex flex-col justify-center bg-white max-w-md mx-auto p-6 h-[100vh]"
-      >
-        {/* Back Button */}
-        <button
-          onClick={() => setModalType(null)}
-          className="absolute top-4 left-4 text-sm px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded"
-        >
-          ← Back
-        </button>
-
-        <h2 className="text-lg font-bold mb-4 mt-12 text-center">
-          {deliveryStatus === "register"
-            ? "Delivery Boy Registration"
-            : "Delivery Boy Login"}
-        </h2>
-
-        {/* Conditionally render login or register */}
-        {deliveryStatus === "register" ? (
-          <>
-            {["name", "email", "phone", "password"].map((field) => (
-              <input
-                key={field}
-                placeholder={field}
-                type={field === "password" ? "password" : "text"}
-                value={deliveryForm[field]}
-                className="w-full mb-2 border px-2 py-1 rounded"
-                onChange={(e) =>
-                  setDeliveryForm({ ...deliveryForm, [field]: e.target.value })
-                }
-              />
-            ))}
-            <button
-              onClick={handleDeliveryRegister}
-              className="w-full bg-blue-500 text-white py-2 rounded mb-2"
-            >
-              Register
-            </button>
-            <p className="text-sm text-center text-gray-600">
-              Already have an account?{" "}
-              <button
-                className="text-blue-600 underline"
-                onClick={() => setDeliveryStatus("login")}
-              >
-                Login
-              </button>
-            </p>
-          </>
-        ) : (
-          <>
-            {["phone", "password"].map((field) => (
-              <input
-                key={field}
-                placeholder={field}
-                type={field === "password" ? "password" : "text"}
-                value={deliveryForm[field]}
-                className="w-full mb-2 border px-2 py-1 rounded"
-                onChange={(e) =>
-                  setDeliveryForm({ ...deliveryForm, [field]: e.target.value })
-                }
-              />
-            ))}
-            <button
-              onClick={handleDeliveryLogin}
-              className="w-full bg-green-600 text-white py-2 rounded mb-2"
-            >
-              Login
-            </button>
-            <p className="text-sm text-center text-gray-600">
-              Don't have an account?
-              <button
-                className="text-blue-600 underline"
-                onClick={() => setDeliveryStatus("register")}
-              >
-                Register
-              </button>
-            </p>
-          </>
-        )}
-
-        {deliveryStatus === "pending" && (
-          <p className="text-yellow-600 text-sm mt-2 text-center">
-            Pending admin approval. Please try later.
-          </p>
-        )}
-      </Modal>
-
-      {/* Admin Modal */}
-      <Modal
-        isOpen={modalType === "admin"}
-        onRequestClose={() => setModalType(null)}
-        className="flex flex-col justify-center bg-white max-w-sm mx-auto p-6 h-[100vh]"
-      >
-        {/* Back Button */}
-        <button
-          onClick={() => setModalType(null)}
-          className="absolute top-4 left-4 text-sm px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded"
-        >
-          ← Back
-        </button>
-        <h2 className="text-lg text-center font-bold mb-12">Admin Login</h2>
-        <input
-          placeholder="Admin Name"
-          className="w-full border mb-2 px-2 py-1 rounded"
-          value={adminCreds.username}
-          onChange={(e) =>
-            setAdminCreds({ ...adminCreds, username: e.target.value })
-          }
-        />
-        <input
-          placeholder="Password"
-          type="password"
-          className="w-full border mb-2 px-2 py-1 rounded"
-          value={adminCreds.password}
-          onChange={(e) =>
-            setAdminCreds({ ...adminCreds, password: e.target.value })
-          }
-        />
-        <button
-          onClick={handleAdminLogin}
-          className="w-full bg-blue-600 text-white py-2 rounded"
-        >
-          Login
-        </button>
-      </Modal>
     </div>
   );
 };
