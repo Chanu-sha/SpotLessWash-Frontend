@@ -24,8 +24,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Firebase config file
-firebase.js
 
 # Environment variables
 .env

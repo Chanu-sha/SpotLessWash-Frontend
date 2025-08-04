@@ -20,6 +20,7 @@ export default defineConfig({
           "**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}",
           "assets/**/*.{png,jpg,jpeg,svg,webp}",
         ],
+        navigateFallback: "/index.html",
       },
       manifest: {
         name: "Spotless Wash",
@@ -43,4 +44,9 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      "/api": "http://localhost:5000",
+    },
+  },
 });
