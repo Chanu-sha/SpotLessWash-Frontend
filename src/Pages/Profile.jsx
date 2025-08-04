@@ -113,9 +113,9 @@ export default function Profile() {
   };
 
   const getApiUrl = () => {
-    if (userType === "firebase") return "/api/user/profile";
-    if (userType === "delivery") return "/api/deliveryboy/profile";
-    return "/api/dhobi/profile";
+    if (userType === "firebase") return "https://spotlesswash-backend.onrender.com/api/user/profile";
+    if (userType === "delivery") return "https://spotlesswash-backend.onrender.com/api/deliveryboy/profile";
+    return "https://spotlesswash-backend.onrender.com/api/dhobi/profile";
   };
 
   const handleSaveField = async (field) => {
