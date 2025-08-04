@@ -14,6 +14,7 @@ export default function Profile() {
   const [editingField, setEditingField] = useState(null);
   const [uploadingPercent, setUploadingPercent] = useState(0);
   const { role, fetchProfile } = useContext(UserContext);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   const [form, setForm] = useState({
     name: "",
@@ -40,7 +41,7 @@ export default function Profile() {
       if (dhobiToken) {
         setUserType("dhobi");
         try {
-          const res = await fetch("/api/dhobi/profile", {
+          const res = await fetch(`${API_BASE_URL}/dhobi/profile`, {
             headers: { Authorization: `Bearer ${dhobiToken}` },
           });
           if (!res.ok) throw new Error("Dhobi profile fetch failed");
@@ -56,7 +57,7 @@ export default function Profile() {
       if (deliveryToken) {
         setUserType("delivery");
         try {
-          const res = await fetch("/api/deliveryboy/profile", {
+          const res = await fetch(`${API_BASE_URL}/deliveryboy/profile`, {
             headers: { Authorization: `Bearer ${deliveryToken}` },
           });
           if (!res.ok) throw new Error("Delivery profile fetch failed");
@@ -75,7 +76,7 @@ export default function Profile() {
           setUserType("firebase");
           const token = await user.getIdToken();
           try {
-            const res = await fetch("/api/user/profile", {
+            const res = await fetch(`${API_BASE_URL}/user/profile`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             if (!res.ok) throw new Error("User profile fetch failed");
