@@ -1,3 +1,4 @@
+// ---------- DeliveryDashboard.jsx ----------
 import React, { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -8,13 +9,16 @@ const DeliveryDashboard = () => {
   const [tab, setTab] = useState("pickup");
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dhobis, setDhobis] = useState([]);
+  const [selectedDhobi, setSelectedDhobi] = useState({});
+  const [deliveryOrders, setDeliveryOrders] = useState([]);
 
   const fetchAllOrders = async () => {
     try {
       setLoading(true);
       const res = await fetch(`${API_BASE_URL}/order/unclaimed`);
       const data = await res.json();
-      setAllOrders(data.orders || []);
+      setAllOrders((data.orders || []).filter((order) => !order.claimedBy));
     } catch (err) {
       toast.error("Failed to fetch orders");
     } finally {
@@ -24,6 +28,13 @@ const DeliveryDashboard = () => {
 
   const handleGetDeal = async (orderId) => {
     const token = localStorage.getItem("deliveryToken");
+    const dhobiId = selectedDhobi[orderId];
+
+    if (!dhobiId) {
+      toast.error("Please select a dhobi first");
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/deliveryboy/claim/${orderId}`, {
         method: "POST",
@@ -31,11 +42,12 @@ const DeliveryDashboard = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ dhobiId }),
       });
       const data = await res.json();
       if (res.ok) {
         toast.success("Deal claimed successfully!");
-        fetchAllOrders();
+        setAllOrders((prev) => prev.filter((o) => o._id !== orderId));
       } else {
         toast.error(data.message || "Failed to claim deal");
       }
@@ -44,8 +56,66 @@ const DeliveryDashboard = () => {
     }
   };
 
+  const fetchDeliveryOrders = async () => {
+    const token = localStorage.getItem("deliveryToken");
+    try {
+      const res = await fetch(`${API_BASE_URL}/order/delivery-orders`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) setDeliveryOrders(data.orders || []);
+      else toast.error(data.message || "Failed to fetch delivery orders");
+    } catch (err) {
+      toast.error("Error fetching delivery orders");
+    }
+  };
+  
+  const handleClaimDelivery = async (orderId) => {
+    const token = localStorage.getItem("deliveryToken");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/order/${orderId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "Picking Up" }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Order status set to Picking Up");
+        fetchDeliveryOrders(); 
+      } else {
+        toast.error(data.message || "Failed to update status");
+      }
+    } catch (err) {
+      toast.error("Error updating order status");
+    }
+  };
+
+  const fetchDhobis = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/dhobi/all`, {
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_ADMIN_SECRET}`,
+        },
+      });
+      const data = await res.json();
+      setDhobis(data || []);
+    } catch (err) {
+      toast.error("Failed to load dhobi list");
+    }
+  };
+
   useEffect(() => {
     fetchAllOrders();
+    fetchDhobis();
+    fetchDeliveryOrders();
   }, []);
 
   const pickupOrders = allOrders.filter((order) =>
@@ -71,7 +141,6 @@ const DeliveryDashboard = () => {
           Delivery Dashboard
         </h1>
 
-        {/* Tab Navigation */}
         <div className="flex mb-6 bg-white rounded-lg shadow-sm p-1">
           <button
             className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all ${
@@ -103,8 +172,73 @@ const DeliveryDashboard = () => {
           <>
             {tab === "pickup" && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {pickupOrders.length > 0 ? (
-                  pickupOrders.map((order) => (
+                {pickupOrders.map((order) => (
+                  <div
+                    key={order._id}
+                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
+                  >
+                    <div className="p-5">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-lg font-semibold text-gray-800 truncate">
+                          {order.name}
+                        </h3>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
+                            order.status
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+                      </div>
+                      <div className="mt-4 space-y-2 text-sm">
+                        <div>Quantity: {order.quantity}</div>
+                        <div>Address: {order.address || "N/A"}</div>
+                        <div>Mobile: {order.mobile || "N/A"}</div>
+                        <div>{new Date(order.date).toLocaleString()}</div>
+
+                        <select
+                          value={selectedDhobi[order._id] || ""}
+                          onChange={(e) =>
+                            setSelectedDhobi({
+                              ...selectedDhobi,
+                              [order._id]: e.target.value,
+                            })
+                          }
+                          className="w-full mt-2 p-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="">Select Dhobi</option>
+                          {dhobis
+                            .filter((d) => d.approved && !d.rejected)
+                            .map((d) => (
+                              <option key={d._id} value={d._id}>
+                                {d.name} -{d.address || "No address"}
+                              </option>
+                            ))}
+                        </select>
+
+                        <button
+                          onClick={() => handleGetDeal(order._id)}
+                          className="mt-4 w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2 px-4 rounded-lg shadow-sm font-medium transition-all"
+                        >
+                          Claim This Delivery
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {tab === "delivery" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {deliveryOrders.length === 0 ? (
+                  <div className="bg-white rounded-xl shadow-sm p-6 text-center col-span-full">
+                    <p className="text-gray-500">
+                      No delivery orders available
+                    </p>
+                  </div>
+                ) : (
+                  deliveryOrders.map((order) => (
                     <div
                       key={order._id}
                       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
@@ -114,134 +248,38 @@ const DeliveryDashboard = () => {
                           <h3 className="text-lg font-semibold text-gray-800 truncate">
                             {order.name}
                           </h3>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
-                              order.status
-                            )}`}
-                          >
+                          <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
                             {order.status}
                           </span>
                         </div>
+                        <div className="mt-4 space-y-2 text-sm">
+                          <div>Quantity: {order.quantity}</div>
+                          <div>Address: {order.address || "N/A"}</div>
+                          <div>Mobile: {order.mobile || "N/A"}</div>
+                          <div>{new Date(order.date).toLocaleString()}</div>
 
-                        <div className="mt-4 space-y-2">
-                          <div className="flex items-center text-gray-600">
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                              />
-                            </svg>
-                            <span>Quantity: {order.quantity}</span>
-                          </div>
+                          {order.assignedDhobi && (
+                            <div className="mt-2 text-gray-600 text-sm">
+                              <p className="font-medium text-gray-700">
+                                Assigned Dhobi:
+                              </p>
+                              <p>{order.assignedDhobi.name}</p>
+                              <p>{order.assignedDhobi.address}</p>
+                              <p>{order.assignedDhobi.mobile}</p>
+                            </div>
+                          )}
 
-                          <div className="flex items-center text-gray-600">
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            <span>Price: ₹{order.price}</span>
-                          </div>
-
-                          <div className="flex items-center text-gray-500 text-sm">
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                            <span>{new Date(order.date).toLocaleString()}</span>
-                          </div>
+                          <button
+                            onClick={() => handleClaimDelivery(order._id)}
+                            className="mt-4 w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white py-2 px-4 rounded-lg shadow-sm font-medium transition-all"
+                          >
+                            Claim This Delivery
+                          </button>
                         </div>
-
-                        <button
-                          onClick={() => handleGetDeal(order._id)}
-                          className="mt-4 w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2 px-4 rounded-lg shadow-sm font-medium transition-all transform hover:scale-[1.02]"
-                        >
-                          Claim This Delivery
-                        </button>
                       </div>
                     </div>
                   ))
-                ) : (
-                  <div className="col-span-full text-center py-10">
-                    <div className="text-gray-400 mb-4">
-                      <svg
-                        className="w-16 h-16 mx-auto"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1}
-                          d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM12 6h.01M12 12h.01M12 18h.01M12 7a1 1 0 100-2 1 1 0 000 2zm0 6a1 1 0 100-2 1 1 0 000 2zm0 6a1 1 0 100-2 1 1 0 000 2z"
-                        />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-500">
-                      No pickup orders available
-                    </h3>
-                    <p className="text-gray-400 mt-1">
-                      Check back later for new orders
-                    </p>
-                  </div>
                 )}
-              </div>
-            )}
-
-            {tab === "delivery" && (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                <div className="text-indigo-400 mb-4">
-                  <svg
-                    className="w-16 h-16 mx-auto"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1}
-                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-medium text-gray-700 mb-2">
-                  Delivery Management
-                </h3>
-                <p className="text-gray-500 max-w-md mx-auto">
-                  The delivery orders view is currently under development. We're
-                  working hard to bring you this feature soon!
-                </p>
               </div>
             )}
           </>

@@ -6,8 +6,8 @@ const AdminPanel = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET;
 
-  const [activeRole, setActiveRole] = useState("deliveryboy"); // or 'dhobi'
-  const [activeTab, setActiveTab] = useState("requests"); // 'all' | 'requests' | 'rejected'
+  const [activeRole, setActiveRole] = useState("deliveryboy"); 
+  const [activeTab, setActiveTab] = useState("requests"); 
   const [users, setUsers] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
 

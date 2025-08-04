@@ -4,12 +4,17 @@ import { useNavigate } from "react-router-dom";
 import { FiEdit2, FiPlus, FiLogOut, FiCamera } from "react-icons/fi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useContext } from "react";
+import { UserContext } from "../context/UserContext";
+
 
 export default function Profile() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [uploadingPercent, setUploadingPercent] = useState(0);
+  const { role, fetchProfile } = useContext(UserContext);
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -369,7 +374,7 @@ export default function Profile() {
                     navigate(
                       profile.role === "delivery"
                         ? "/delivery-dashboard"
-                        : "/dhobi/dashboard"
+                        : "/dhobi-dashboard"
                     )
                   }
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-600 hover:to-purple-600 transition shadow-md"

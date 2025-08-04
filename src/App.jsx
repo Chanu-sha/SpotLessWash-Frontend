@@ -13,6 +13,8 @@ import PrivacyPolicy from "./Pages/PrivacyPolicy";
 import TermsAndConditions from "./Pages/TermsAndConditions";
 import ContactUs from "./Pages/ContactUs";
 import MyDeals from "./components/MyDeals";
+import DhobiDashboard from "./components/DhobiDashboard";
+import AssignedDeals from "./components/AssignedDeals";
 
 function App() {
   return (
@@ -22,6 +24,7 @@ function App() {
           <Route path="/auth" element={<AuthComponent />} />
           <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
+          <Route path="/dhobi-dashboard" element={<DhobiDashboard />} />
           <Route path="/service" element={<Service />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
@@ -31,6 +34,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/my-deals" element={<MyDeals />} />
+          <Route path="/dhobi-assigned" element={<AssignedDeals/>} />
         </Routes>
         <FooterNav />
     </div>

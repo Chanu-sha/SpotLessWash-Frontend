@@ -13,7 +13,8 @@ export default function Service() {
   const [showPopup, setShowPopup] = useState(false);
   const [currentService, setCurrentService] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [orderNotes, setOrderNotes] = useState("");
+  const [address, setAddress] = useState("");
+  const [mobile, setMobile] = useState("");
   const user = auth.currentUser;
 
   const services = [
@@ -51,12 +52,21 @@ export default function Service() {
     setCurrentService(service);
     setShowPopup(true);
     setQuantity(1);
-    setOrderNotes("");
+    setAddress("");
   };
 
   const confirmOrder = async () => {
     if (!user) {
       toast.error("You must be logged in to place an order.");
+      return;
+    }
+    if (!mobile.trim() || mobile.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (!address.trim()) {
+      toast.error("Please enter a valid address.");
       return;
     }
 
@@ -70,7 +80,8 @@ export default function Service() {
           name: currentService.name,
           quantity,
           price: currentService.price * quantity,
-          notes: orderNotes,
+          address,
+          mobile,
           pickupDelivery: 50,
           status: "Scheduled",
         },
@@ -83,7 +94,7 @@ export default function Service() {
 
       setShowPopup(false);
       setSelectedServices([...selectedServices, currentService.id]);
-      toast.success(" Order placed successfully!");
+      toast.success("Order placed successfully!");
     } catch (error) {
       toast.error("Failed to place order. Please try again.");
     }
@@ -95,7 +106,7 @@ export default function Service() {
   };
 
   return (
-    <div className="max-w-sm  mx-auto my-auto  p-4 pb-24 bg-white min-h-screen relative">
+    <div className="max-w-sm mx-auto my-auto p-4 pb-24 bg-white min-h-screen relative">
       <ToastContainer position="top-center" autoClose={3000} />
       <h1 className="text-xl font-bold text-gray-800 mb-6">Select Services</h1>
 
@@ -152,8 +163,8 @@ export default function Service() {
 
       {/* Fullscreen Popup */}
       {showPopup && currentService && (
-        <div className="fixed max-w-sm h-[100vh] bg-white  mx-auto inset-0 z-50 ">
-          <div className="bg-white  w-full max-w-sm p-6 shadow-lg">
+        <div className="fixed inset-0 z-50 mb-12 bg-white overflow-y-auto">
+          <div className="w-full max-w-sm mx-auto p-6 min-h-screen flex flex-col">
             <h2 className="text-xl font-bold mb-4">{currentService.name}</h2>
 
             <div className="mb-4">
@@ -177,17 +188,28 @@ export default function Service() {
                   +
                 </button>
               </div>
-
               <div className="mb-4">
                 <label className="block text-gray-700 mb-2">
-                  Order Notes (optional):
+                  Mobile Number:
+                </label>
+                <input
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="Enter 10-digit mobile number"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">
+                  Delivery Address:
                 </label>
                 <textarea
-                  value={orderNotes}
-                  onChange={(e) => setOrderNotes(e.target.value)}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded"
                   rows={3}
-                  placeholder="Any special instructions..."
+                  placeholder="Enter full delivery address..."
                 />
               </div>
 
