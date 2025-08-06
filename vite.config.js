@@ -44,9 +44,4 @@ export default defineConfig({
       },
     }),
   ],
-  server: {
-    proxy: {
-      "/api": "https://spotlesswash-backend.onrender.com",
-    },
-  },
 });
