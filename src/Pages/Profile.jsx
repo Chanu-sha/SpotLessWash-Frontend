@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { FiEdit2, FiPlus, FiLogOut, FiCamera } from "react-icons/fi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
+import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Profile() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [uploadingPercent, setUploadingPercent] = useState(0);
-  const { role, fetchProfile } = useContext(UserContext);
-  // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  const { role } = useContext(UserContext);
 
   const [form, setForm] = useState({
     name: "",
@@ -41,11 +41,9 @@ export default function Profile() {
       if (dhobiToken) {
         setUserType("dhobi");
         try {
-          const res = await fetch(`https://spotlesswash-backend.onrender.com/api/dhobi/profile`, {
+          const { data } = await axios.get(`${API_BASE_URL}/dhobi/profile`, {
             headers: { Authorization: `Bearer ${dhobiToken}` },
           });
-          if (!res.ok) throw new Error("Dhobi profile fetch failed");
-          const data = await res.json();
           setProfile({ ...data, role: "dhobi" });
           setForm(data);
           return;
@@ -57,11 +55,9 @@ export default function Profile() {
       if (deliveryToken) {
         setUserType("delivery");
         try {
-          const res = await fetch(`https://spotlesswash-backend.onrender.com/api/deliveryboy/profile`, {
+          const { data } = await axios.get(`${API_BASE_URL}/deliveryboy/profile`, {
             headers: { Authorization: `Bearer ${deliveryToken}` },
           });
-          if (!res.ok) throw new Error("Delivery profile fetch failed");
-          const data = await res.json();
           setProfile({ ...data, role: "delivery" });
           setForm(data);
           return;
@@ -70,24 +66,20 @@ export default function Profile() {
         }
       }
 
-      // Fallback to Firebase Auth
       const unsubscribe = auth.onAuthStateChanged(async (user) => {
         if (user) {
           setUserType("firebase");
           const token = await user.getIdToken();
           try {
-            const res = await fetch(`https://spotlesswash-backend.onrender.com/api/user/profile`, {
+            const { data } = await axios.get(`${API_BASE_URL}/user/profile`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (!res.ok) throw new Error("User profile fetch failed");
-            const data = await res.json();
             setProfile(data);
             setForm(data);
           } catch (err) {
             toast.error("Failed to load user profile");
           }
         } else {
-          // No user found anywhere: show Guest
           setProfile({
             name: "Guest User",
             email: "guest@example.com",
@@ -113,24 +105,24 @@ export default function Profile() {
   };
 
   const getApiUrl = () => {
-    if (userType === "firebase") return "https://spotlesswash-backend.onrender.com/api/user/profile";
-    if (userType === "delivery") return "https://spotlesswash-backend.onrender.com/api/deliveryboy/profile";
-    return "https://spotlesswash-backend.onrender.com/api/dhobi/profile";
+    if (userType === "firebase") return `${API_BASE_URL}/user/profile`;
+    if (userType === "delivery") return `${API_BASE_URL}/deliveryboy/profile`;
+    return `${API_BASE_URL}/dhobi/profile`;
   };
 
   const handleSaveField = async (field) => {
     try {
       const token = await getToken();
-      const res = await fetch(getApiUrl(), {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ [field]: form[field] }),
-      });
-
-      const data = await res.json();
+      const { data } = await axios.put(
+        getApiUrl(),
+        { [field]: form[field] },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       setProfile(data.user);
       setForm(data.user);
       toast.success(`${field} updated!`);
@@ -167,16 +159,17 @@ export default function Profile() {
         if (!data.secure_url) throw new Error("Upload failed");
 
         const token = await getToken();
-        const res = await fetch(getApiUrl(), {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ photo: data.secure_url }),
-        });
+        const { data: updated } = await axios.put(
+          getApiUrl(),
+          { photo: data.secure_url },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-        const updated = await res.json();
         setProfile(updated.user);
         setForm((prev) => ({ ...prev, photo: data.secure_url }));
         toast.success("Photo updated");
