@@ -22,12 +22,18 @@ export default defineConfig({
         navigateFallback: "/index.html",
       },
       manifest: {
+        id: "/",
         name: "Spotless Wash",
         short_name: "Spotless",
+        description: "Spotless is a modern Laundry booking and management app.",
         start_url: "/",
         display: "standalone",
+        orientation: "portrait",
         background_color: "#ffffff",
         theme_color: "#000000",
+        launch_handler: {
+          client_mode: "auto",
+        },
         icons: [
           {
             src: "logo192.png",
@@ -38,6 +44,24 @@ export default defineConfig({
             src: "logo512.png",
             sizes: "512x512",
             type: "image/png",
+          },
+          {
+            src: "icon-maskable.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+        screenshots: [
+          {
+            src: "screenshots/screen1.png",
+            type: "image/png",
+            sizes: "540x720",
+          },
+          {
+            src: "screenshots/screen2.png",
+            type: "image/png",
+            sizes: "540x720",
           },
         ],
       },
