@@ -118,8 +118,8 @@ const AuthComponent = () => {
                       className="w-full px-3 py-1 bg-white/20 border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-white text-white"
                     >
                       <option value="user">User Login</option>
-                      <option value="delivery">Delivery Partner</option>
-                      <option value="dhobi">Dhobi Professional</option>
+                      <option value="delivery">Delivery Portal</option>
+                      <option value="dhobi">Vender Portal</option>
                       <option value="admin">Admin Portal</option>
                     </select>
                   </div>
