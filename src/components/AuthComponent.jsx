@@ -72,7 +72,7 @@ const AuthComponent = () => {
   const roleLabel = {
     user: "User Login",
     delivery: "Delivery Partner",
-    dhobi: "Dhobi Professional",
+    dhobi: "Vendor Partner",
     admin: "Admin Portal",
   };
 
