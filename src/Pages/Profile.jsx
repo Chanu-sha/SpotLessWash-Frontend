@@ -7,15 +7,12 @@ import "react-toastify/dist/ReactToastify.css";
 import { UserContext } from "../context/UserContext";
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 export default function Profile() {
-  console.log("API_BASE_URL from env:", import.meta.env.VITE_API_BASE_URL);
   const navigate = useNavigate();
+  const { role } = useContext(UserContext);
   const [profile, setProfile] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [uploadingPercent, setUploadingPercent] = useState(0);
-  const { role } = useContext(UserContext);
 
   const [form, setForm] = useState({
     name: "",
@@ -28,6 +25,9 @@ export default function Profile() {
   const [userType, setUserType] = useState("firebase");
 
   useEffect(() => {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    let unsubscribe;
+
     const fetchProfile = async () => {
       const dhobiToken = localStorage.getItem("dhobiToken");
       const deliveryToken = localStorage.getItem("deliveryToken");
@@ -56,9 +56,12 @@ export default function Profile() {
       if (deliveryToken) {
         setUserType("delivery");
         try {
-          const { data } = await axios.get(`${API_BASE_URL}/deliveryboy/profile`, {
-            headers: { Authorization: `Bearer ${deliveryToken}` },
-          });
+          const { data } = await axios.get(
+            `${API_BASE_URL}/deliveryboy/profile`,
+            {
+              headers: { Authorization: `Bearer ${deliveryToken}` },
+            }
+          );
           setProfile({ ...data, role: "delivery" });
           setForm(data);
           return;
@@ -67,7 +70,7 @@ export default function Profile() {
         }
       }
 
-      const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      unsubscribe = auth.onAuthStateChanged(async (user) => {
         if (user) {
           setUserType("firebase");
           const token = await user.getIdToken();
@@ -91,11 +94,13 @@ export default function Profile() {
           });
         }
       });
-
-      return () => unsubscribe();
     };
 
     fetchProfile();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const getToken = async () => {
