@@ -119,7 +119,7 @@ const AuthComponent = () => {
                     >
                       <option value="user">User Login</option>
                       <option value="delivery">Delivery Portal</option>
-                      <option value="dhobi">Vender Portal</option>
+                      <option value="dhobi">Vendor Portal</option>
                       <option value="admin">Admin Portal</option>
                     </select>
                   </div>

@@ -14,7 +14,7 @@ import Footer from "../components/Footer";
 
 export default function AboutUs() {
   return (
-    <div className="bg-gradient-to-br from-green-50 to-emerald-50">
+    <div className="bg-gradient-to-br mb-10 from-green-50 to-emerald-50">
       <Header />
       <div className="min-h-screen flex flex-col gap-6 max-w-md py-8 mx-auto px-2">
         {/* ---------------- HERO SECTION ---------------- */}

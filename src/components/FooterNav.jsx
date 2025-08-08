@@ -9,8 +9,8 @@ import { MdDryCleaning } from "react-icons/md";
 import { GiClothes } from "react-icons/gi";
 
 export default function FooterNav() {
-  const { role } = useContext(UserContext);
   const location = useLocation();
+  const { role } = useContext(UserContext);
 
   const isActive = (path) => location.pathname === path;
 
@@ -38,12 +38,20 @@ export default function FooterNav() {
       { to: "/orders", icon: <FaClipboardList className="w-6 h-6" />, text: "Orders" },
       { to: "/profile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
     ],
+    default: [
+      { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
+      { to: "/delivery-dashboard", icon: <FaTruckFast className="w-6 h-6" />, text: "All Orders" },
+      { to: "/my-deals", icon: <FaClipboardList className="w-6 h-6" />, text: "My Deals" },
+      { to: "/profile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+    ],
   };
+
+  const currentNav = navItems[role] || navItems.default;
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 mx-auto max-w-md bg-white shadow-md border-t border-gray-200 z-50">
       <nav className="flex justify-around items-center h-16 max-w-sm mx-auto">
-        {navItems[role]?.map((item) => (
+        {currentNav.map((item) => (
           <Link key={item.to} to={item.to} className={linkClasses(item.to)}>
             {item.icon}
             <span className="text-xs mt-1">{item.text}</span>

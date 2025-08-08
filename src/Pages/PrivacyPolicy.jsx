@@ -3,7 +3,7 @@ import Footer from "../components/Footer";
 
 export default function PrivacyPolicy() {
   return (
-    <div className=" max-w-md mx-auto bg-gradient-to-br from-green-50 to-emerald-50">
+    <div className=" max-w-md mb-10 mx-auto bg-gradient-to-br from-green-50 to-emerald-50">
       <Header />
       <div className="min-h-screen py-10 px-4 mx-auto max-w-4xl">
         <div className="space-y-8">

@@ -1,81 +1,46 @@
-// src/context/UserContext.js
+// src/context/UserContext.jsx
 import React, { createContext, useState, useEffect } from "react";
 import { auth } from "../firebase";
-import { toast } from "react-toastify";
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [profile, setProfile] = useState(null);
-  const [role, setRole] = useState("firebase");
-  const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState(null);
 
-  const fetchProfile = async () => {
-    setLoading(true);
-    const dhobiToken = localStorage.getItem("dhobiToken");
-    const deliveryToken = localStorage.getItem("deliveryToken");
-
-    if (dhobiToken) {
-      setRole("dhobi");
-      try {
-        const res = await fetch("/api/dhobi/profile", {
-          headers: { Authorization: `Bearer ${dhobiToken}` },
-        });
-        const data = await res.json();
-        setProfile({ ...data, role: "dhobi" });
-        return;
-      } catch {
-        toast.error("Failed to load dhobi profile");
-      }
-    }
-
-    if (deliveryToken) {
-      setRole("delivery");
-      try {
-        const res = await fetch("/api/deliveryboy/profile", {
-          headers: { Authorization: `Bearer ${deliveryToken}` },
-        });
-        const data = await res.json();
-        setProfile({ ...data, role: "delivery" });
-        return;
-      } catch {
-        toast.error("Failed to load delivery profile");
-      }
-    }
-
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        setRole("firebase");
-        const token = await user.getIdToken();
-        try {
-          const res = await fetch("/api/user/profile", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data = await res.json();
-          setProfile(data);
-        } catch {
-          toast.error("Failed to load user profile");
-        }
-      } else {
-        setProfile({
-          name: "Guest User",
-          email: "guest@example.com",
-          phone: "",
-          address: "",
-          photo: "",
-          isDemo: true,
-        });
-      }
-      setLoading(false);
-    });
+  const readTokenFromLS = (key) => {
+    const t = localStorage.getItem(key);
+    if (!t || t === "undefined" || t === "null") return null;
+    return t;
   };
 
   useEffect(() => {
-    fetchProfile();
+    const checkRole = () => {
+      const dhobiToken = readTokenFromLS("dhobiToken");
+      const deliveryToken = readTokenFromLS("deliveryToken");
+
+      if (dhobiToken) {
+        setRole("dhobi");
+        return;
+      }
+      if (deliveryToken) {
+        setRole("delivery");
+        return;
+      }
+
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          setRole("firebase");
+        } else {
+          setRole(null); 
+        }
+      });
+    };
+
+    checkRole();
   }, []);
 
   return (
-    <UserContext.Provider value={{ profile, setProfile, role, loading, fetchProfile }}>
+    <UserContext.Provider value={{ role, setRole }}>
       {children}
     </UserContext.Provider>
   );

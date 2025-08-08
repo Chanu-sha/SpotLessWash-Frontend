@@ -1,40 +1,85 @@
 import { FaStar } from "react-icons/fa";
-
 import {
   PiCoatHangerLight,
   PiTruckLight,
   PiCalendarDuotone,
 } from "react-icons/pi";
 import { SlLocationPin } from "react-icons/sl";
-import pressImg from "../assets/HeroImage.jpg";
+import pressImg1 from "../assets/HeroImage.jpeg";
+import pressImg2 from "../assets/HeroImage2.jpeg"; 
+import pressImg3 from "../assets/HeroImage3.webp";
+import pressImg4 from "../assets/HeroImage4.jpg";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useContext } from "react";
+import { UserContext } from "../context/UserContext"; // ✅ Import context
 
 export default function Home() {
   const navigate = useNavigate();
+  const { role } = useContext(UserContext); // ✅ Get role from context
   const areas = ["Bhubaneswar", "Cuttack", "Puri"];
   const stars = Array(5).fill(0);
+
+  // Carousel images array
+  const images = [pressImg1, pressImg2, pressImg3, pressImg4];
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Auto-slide logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) =>
+        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 2500); // 2.5 seconds
+    return () => clearInterval(interval);
+  }, [images.length]);
+
+  // ✅ Decide button text & navigation based on role
+  const getButtonText = () => {
+    if (role === "delivery") return "Get a Delivery";
+    if (role === "dhobi") return "Get a Deal";
+    return "Book Now";
+  };
+
+  const handleButtonClick = () => {
+    if (role === "delivery") {
+      navigate("/delivery-dashboard"); // change path as needed
+    } else if (role === "dhobi") {
+      navigate("/dhobi-dashboard"); // change path as needed
+    } else {
+      navigate("/service");
+    }
+  };
 
   return (
     <div>
       <Header />
-      <div className="min-h-screen  flex flex-col gap-6 px-4 py-4 mx-auto max-w-md">
-        {/* Hero Image */}
-        <div className="rounded overflow-hidden">
-          <img
-            src={pressImg}
-            alt="Iron Image"
-            className="rounded w-full object-cover"
-          />
+      <div className="min-h-screen mb-10 flex flex-col gap-6 px-4 py-4 mx-auto max-w-md">
+        
+        {/* Hero Carousel */}
+        <div className="relative w-full h-56 overflow-hidden rounded">
+          <div
+            className="flex transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+          >
+            {images.map((img, idx) => (
+              <img
+                key={idx}
+                src={img}
+                alt={`Slide ${idx + 1}`}
+                className="w-full h-56 object-cover flex-shrink-0"
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Book Now Button */}
+        {/* Dynamic Button */}
         <button
-          onClick={() => navigate("/service")}
+          onClick={handleButtonClick}
           className="bg-green-600 text-white rounded px-5 py-2 self-center"
         >
-          Book Now
+          {getButtonText()}
         </button>
 
         {/* How It Works */}
@@ -42,7 +87,7 @@ export default function Home() {
           <h2 className="text-base text-gray-400 font-semibold mb-4">
             How It Works
           </h2>
-          <ul className="flex flex-col  text-gray-700">
+          <ul className="flex flex-col text-gray-700">
             <li className="flex m-0 items-center gap-2">
               <PiCalendarDuotone className="text-green-600" />
               Schedule a Pickup
@@ -78,21 +123,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Customer Testimonials */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-400 mb-4">
-            Customer Reviews
-          </h2>
-          <div className="flex flex-col gap-1 border p-4 py-1 rounded bg-white shadow-sm">
-            <span className="font-medium text-gray-400">Priya Sharma</span>
-            <div className="flex items-center gap-1 text-green-600">
-              {stars.map((_, i) => (
-                <FaStar key={i} />
-              ))}
-            </div>
-            <p className="text-sm text-gray-600">2 months ago</p>
-          </div>
-        </section>
         <p className="text-center text-gray-500 text-xs mt-4">
           Proudly made in Odisha ❤️
         </p>

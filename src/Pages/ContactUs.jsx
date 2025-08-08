@@ -4,7 +4,7 @@ import { FaMapMarkerAlt, FaPhone, FaPaperPlane } from "react-icons/fa";
 
 export default function ContactUs() {
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mb-10 mx-auto">
       <Header />
       <div className="min-h-screen py-8 px-4 mx-auto max-w-4xl">
         {/* Hero Section */}

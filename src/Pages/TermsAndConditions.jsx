@@ -3,7 +3,7 @@ import Footer from "../components/Footer";
 
 export default function TermsAndConditions() {
   return (
-    <div className="bg-gradient-to-b from-green-50 to-white">
+    <div className="bg-gradient-to-b mb-10 from-green-50 to-white">
       <Header />
       <div className="min-h-screen py-8 px-4 mx-auto max-w-4xl">
         {/* Hero Section */}

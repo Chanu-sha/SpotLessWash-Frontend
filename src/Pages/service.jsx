@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { PiShirtFoldedLight, PiPants, PiDressDuotone } from "react-icons/pi";
-import { GiBed } from "react-icons/gi";
+import {
+  PiShirtFoldedLight,
+  PiPants,
+  PiDressDuotone
+} from "react-icons/pi";
+import { GiBed, GiRunningShoe } from "react-icons/gi";
 import axios from "axios";
 import { auth } from "../firebase";
 import { ToastContainer, toast } from "react-toastify";
@@ -22,29 +26,36 @@ export default function Service() {
       id: "662cda019bc7c5b4f97ff85a",
       name: "Shirts",
       description: "Ironing of shirts, t-shirts, and tops",
-      price: 50,
+      price: 30,
       icon: PiShirtFoldedLight,
     },
     {
       id: "662cda0d9bc7c5b4f97ff85b",
       name: "Pants",
       description: "Ironing of pants, jeans, and trousers",
-      price: 60,
+      price: 35,
       icon: PiPants,
     },
     {
       id: "662cda179bc7c5b4f97ff85c",
       name: "Ethnic Wear",
       description: "Ironing of sarees, lehengas, and kurtis",
-      price: 80,
+      price: 60,
       icon: PiDressDuotone,
     },
     {
       id: "662cda209bc7c5b4f97ff85d",
       name: "Home Linen",
-      description: "Ironing of bedsheets, pillow covers, and curtains",
-      price: 100,
+      description: "Ironing of bedsheets with pillow covers, and curtains",
+      price: 70,
       icon: GiBed,
+    },
+    {
+      id: "662cda219bc7c5b4f97ff85e",
+      name: "Shoes",
+      description: "Cleaning and polishing of shoes",
+      price: 100,
+      icon: GiRunningShoe,
     },
   ];
 

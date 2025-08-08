@@ -1,18 +1,20 @@
+// src/pages/Profile.jsx
 import React, { useEffect, useState, useContext } from "react";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { FiEdit2, FiPlus, FiLogOut, FiCamera } from "react-icons/fi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { UserContext } from "../context/UserContext";
 import axios from "axios";
+import { UserContext } from "../context/UserContext";
 
 export default function Profile() {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
-  const { role } = useContext(UserContext);
   const [profile, setProfile] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [uploadingPercent, setUploadingPercent] = useState(0);
+  const { setRole } = useContext(UserContext);
 
   const [form, setForm] = useState({
     name: "",
@@ -24,86 +26,107 @@ export default function Profile() {
 
   const [userType, setUserType] = useState("firebase");
 
+  const readTokenFromLS = (key) => {
+    const t = localStorage.getItem(key);
+    if (!t || t === "undefined" || t === "null") return null;
+    return t;
+  };
+
   useEffect(() => {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+    let unsubscribe;
     const fetchProfile = async () => {
-      const dhobiToken = localStorage.getItem("dhobiToken");
-      const deliveryToken = localStorage.getItem("deliveryToken");
+      try {
+        const dhobiToken = readTokenFromLS("dhobiToken");
+        const deliveryToken = readTokenFromLS("deliveryToken");
 
-      if (dhobiToken && dhobiToken !== "undefined") {
-        try {
+        if (dhobiToken) {
           setUserType("dhobi");
-          const { data } = await axios.get(`${API_BASE_URL}/dhobi/profile`, {
-            headers: { Authorization: `Bearer ${dhobiToken}` },
-          });
-          setProfile({ ...data, role: "dhobi" });
-          setForm(data);
-        } catch (err) {
-          console.error("Failed to load vendor profile", err);
-          toast.error("Failed to load vendor profile");
-        }
-        return;
-      }
-
-      if (deliveryToken && deliveryToken !== "undefined") {
-        try {
-          setUserType("delivery");
-          const { data } = await axios.get(
-            `${API_BASE_URL}/deliveryboy/profile`,
-            {
-              headers: { Authorization: `Bearer ${deliveryToken}` },
-            }
-          );
-          setProfile({ ...data, role: "delivery" });
-          setForm(data);
-        } catch (err) {
-          console.error("Failed to load delivery profile", err);
-          toast.error("Failed to load delivery profile");
-        }
-        return;
-      }
-
-      // ✅ Only run Firebase logic if NO dhobi/delivery token exists
-      const unsubscribe = auth.onAuthStateChanged(async (user) => {
-        if (user) {
+          setRole("dhobi");
           try {
-            setUserType("firebase");
-            const token = await user.getIdToken();
-            const { data } = await axios.get(`${API_BASE_URL}/user/profile`, {
-              headers: { Authorization: `Bearer ${token}` },
+            const res = await axios.get(`${API_BASE_URL}/dhobi/profile`, {
+              headers: { Authorization: `Bearer ${dhobiToken}` },
             });
-            setProfile(data);
-            setForm(data);
+            const data = res.data?.user ?? res.data;
+            setProfile({ ...data, role: "dhobi" });
+            setForm((prev) => ({ ...prev, ...data }));
           } catch (err) {
-            console.error("Failed to load Firebase user profile", err);
-            toast.error("Failed to load user profile");
+            console.error("Failed to load vendor profile", err);
           }
-        } else {
-          setProfile({
-            name: "Guest User",
-            email: "guest@example.com",
-            phone: "",
-            address: "",
-            photo: "",
-            isDemo: true,
-          });
+          return;
         }
-      });
 
-      return () => unsubscribe?.();
+        if (deliveryToken) {
+          setUserType("delivery");
+          setRole("delivery");
+          try {
+            const res = await axios.get(`${API_BASE_URL}/deliveryboy/profile`, {
+              headers: { Authorization: `Bearer ${deliveryToken}` },
+            });
+            const data = res.data?.user ?? res.data;
+            setProfile({ ...data, role: "delivery" });
+            setForm((prev) => ({ ...prev, ...data }));
+          } catch (err) {
+            console.error("Failed to load delivery profile", err);
+          }
+          return;
+        }
+
+        // No dhobi/delivery token — fallback to Firebase auth
+        unsubscribe = auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            try {
+              setUserType("firebase");
+              setRole("firebase");
+              const token = await user.getIdToken();
+              const res = await axios.get(`${API_BASE_URL}/user/profile`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              const data = res.data?.user ?? res.data;
+              setProfile(data);
+              setForm((prev) => ({ ...prev, ...data }));
+            } catch (err) {
+              console.error("Failed to load Firebase user profile", err);
+            }
+          } else {
+            // Guest
+            setRole("firebase");
+            setProfile({
+              name: "Guest User",
+              email: "guest@example.com",
+              phone: "",
+              address: "",
+              photo: "",
+              isDemo: true,
+            });
+          }
+        });
+      } catch (err) {
+        console.error("Unexpected error fetching profile", err);
+        toast.error("Unexpected error fetching profile");
+      }
     };
 
     fetchProfile();
-  }, []);
 
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once
+
+  // get token according to current userType
   const getToken = async () => {
-    if (userType === "firebase") return await auth.currentUser.getIdToken();
-    return localStorage.getItem(
+    if (userType === "firebase") {
+      const current = auth.currentUser;
+      if (!current) return null;
+      return await current.getIdToken();
+    }
+    return readTokenFromLS(
       userType === "delivery" ? "deliveryToken" : "dhobiToken"
     );
   };
 
+  // Get correct API URL for profile operations
   const getApiUrl = () => {
     if (userType === "firebase") return `${API_BASE_URL}/user/profile`;
     if (userType === "delivery") return `${API_BASE_URL}/deliveryboy/profile`;
@@ -113,7 +136,12 @@ export default function Profile() {
   const handleSaveField = async (field) => {
     try {
       const token = await getToken();
-      const { data } = await axios.put(
+      if (!token) {
+        toast.error("No auth token available");
+        return;
+      }
+
+      const res = await axios.put(
         getApiUrl(),
         { [field]: form[field] },
         {
@@ -123,17 +151,20 @@ export default function Profile() {
           },
         }
       );
-      setProfile(data.user);
-      setForm(data.user);
+
+      const data = res.data?.user ?? res.data;
+      setProfile(data);
+      setForm((prev) => ({ ...prev, ...data }));
       toast.success(`${field} updated!`);
       setEditingField(null);
     } catch (err) {
+      console.error("Update field error:", err);
       toast.error(`Failed to update ${field}`);
     }
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const formData = new FormData();
@@ -155,57 +186,78 @@ export default function Profile() {
       });
 
       xhr.onload = async () => {
-        const data = JSON.parse(xhr.responseText);
-        if (!data.secure_url) throw new Error("Upload failed");
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (!data.secure_url) throw new Error("Upload failed");
 
-        const token = await getToken();
-        const { data: updated } = await axios.put(
-          getApiUrl(),
-          { photo: data.secure_url },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+          const token = await getToken();
+          if (!token) {
+            toast.error("No auth token available");
+            setUploadingPercent(0);
+            return;
           }
-        );
 
-        setProfile(updated.user);
-        setForm((prev) => ({ ...prev, photo: data.secure_url }));
-        toast.success("Photo updated");
-        setUploadingPercent(0);
+          const res = await axios.put(
+            getApiUrl(),
+            { photo: data.secure_url },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const updated = res.data?.user ?? res.data;
+          setProfile(updated);
+          setForm((prev) => ({ ...prev, photo: data.secure_url }));
+          toast.success("Photo updated");
+          setUploadingPercent(0);
+        } catch (err) {
+          console.error("After upload error:", err);
+          toast.error("Image upload failed");
+          setUploadingPercent(0);
+        }
       };
 
       xhr.onerror = () => {
-        throw new Error("Upload failed");
+        console.error("XHR upload error");
+        toast.error("Image upload failed");
+        setUploadingPercent(0);
       };
 
       xhr.send(formData);
     } catch (err) {
+      console.error("Image upload catch:", err);
       toast.error("Image upload failed");
       setUploadingPercent(0);
     }
   };
 
   const logout = async () => {
-    if (userType === "firebase") {
-      await auth.signOut();
-    } else {
-      localStorage.removeItem(
-        userType === "delivery" ? "deliveryToken" : "dhobiToken"
-      );
+    try {
+      if (userType === "firebase") {
+        await auth.signOut();
+      } else {
+        localStorage.removeItem(
+          userType === "delivery" ? "deliveryToken" : "dhobiToken"
+        );
+      }
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      setProfile({
+        name: "Guest User",
+        email: "guest@example.com",
+        phone: "",
+        address: "",
+        photo: "",
+        isDemo: true,
+      });
+      setUserType("firebase");
+      setRole("firebase");
+      toast.info("Logged out");
     }
-
-    setProfile({
-      name: "Guest User",
-      email: "guest@example.com",
-      phone: "",
-      address: "",
-      photo: "",
-      isDemo: true,
-    });
-
-    toast.info("Logged out");
   };
 
   const renderField = (label, field) => (
@@ -372,19 +424,21 @@ export default function Profile() {
 
           {!profile.isDemo && (
             <div className="border-t border-gray-200 pt-4 space-y-3">
-              {(profile.role === "delivery" || profile.role === "dhobi") && (
+              {profile.role === "delivery" && (
                 <button
-                  onClick={() =>
-                    navigate(
-                      profile.role === "delivery"
-                        ? "/delivery-dashboard"
-                        : "/dhobi-dashboard"
-                    )
-                  }
+                  onClick={() => navigate("/delivery-dashboard")}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-600 hover:to-purple-600 transition shadow-md"
                 >
-                  🚚 Go to {profile.role === "delivery" ? "Delivery" : "Dhobi"}{" "}
-                  Dashboard
+                  🚚 Go to Delivery Dashboard
+                </button>
+              )}
+
+              {profile.role === "dhobi" && (
+                <button
+                  onClick={() => navigate("/dhobi-dashboard")}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-600 hover:to-purple-600 transition shadow-md"
+                >
+                  🧺 Go to Vendor Dashboard
                 </button>
               )}
 
