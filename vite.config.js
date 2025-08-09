@@ -23,11 +23,13 @@ export default defineConfig({
       },
       manifest: {
         id: "/",
+        scope: "/",
         name: "Spotless Wash",
         short_name: "Spotless",
         description: "Spotless is a modern Laundry booking and management app.",
         start_url: "/",
         display: "standalone",
+        display_override: ["standalone", "fullscreen"],
         orientation: "portrait",
         background_color: "#ffffff",
         theme_color: "#000000",
