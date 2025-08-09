@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.onrender.spotlesswash_frontend.twa",
+        "sha256_cert_fingerprints": ["94:61:69:D0:44:0F:9D:51:34:99:4F:20:06:FB:EB:36:15:3F:72:5B:79:08:D6:28:A5:78:F4:F7:D4:16:E4:27"]
+      }
+    }]

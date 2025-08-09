@@ -139,7 +139,7 @@ export default function Orders() {
                       <div className="flex items-center justify-between">
                         <h3 className="font-medium text-gray-800">{order.name}</h3>
                         <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(order.status)}`}>
-                          {order.status}
+                         OTP : {order.otp}
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
