@@ -1,11 +1,14 @@
 // src/context/UserContext.jsx
 import React, { createContext, useState, useEffect } from "react";
 import { auth } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [role, setRole] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // 👈 yeh add karo
+  const [loading, setLoading] = useState(true);
 
   const readTokenFromLS = (key) => {
     const t = localStorage.getItem(key);
@@ -14,33 +17,37 @@ export const UserProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const checkRole = () => {
-      const dhobiToken = readTokenFromLS("dhobiToken");
-      const deliveryToken = readTokenFromLS("deliveryToken");
+    const dhobiToken = readTokenFromLS("dhobiToken");
+    const deliveryToken = readTokenFromLS("deliveryToken");
 
-      if (dhobiToken) {
-        setRole("dhobi");
-        return;
+    if (dhobiToken) {
+      setRole("dhobi");
+      setLoading(false);
+      return;
+    }
+    if (deliveryToken) {
+      setRole("delivery");
+      setLoading(false);
+      return;
+    }
+
+    // 👇 yeh firebase ka listener hai
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);   // 👈 user set ho raha hai
+        setRole("firebase");
+      } else {
+        setCurrentUser(null);
+        setRole(null);
       }
-      if (deliveryToken) {
-        setRole("delivery");
-        return;
-      }
+      setLoading(false);
+    });
 
-      auth.onAuthStateChanged((user) => {
-        if (user) {
-          setRole("firebase");
-        } else {
-          setRole(null); 
-        }
-      });
-    };
-
-    checkRole();
+    return () => unsubscribe();
   }, []);
 
   return (
-    <UserContext.Provider value={{ role, setRole }}>
+    <UserContext.Provider value={{ role, setRole, currentUser, loading }}>
       {children}
     </UserContext.Provider>
   );
