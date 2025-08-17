@@ -10,15 +10,9 @@ export default defineConfig({
     VitePWA({
       injectRegister: "auto",
       registerType: "autoUpdate",
-      devOptions: {
-        enabled: true,
-      },
+      devOptions: { enabled: true },
       workbox: {
-        globDirectory: "dist",
-        globPatterns: [
-          "**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}",
-          "assets/**/*.{png,jpg,jpeg,svg,webp}",
-        ],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2,webp}"],
         navigateFallback: "/index.html",
       },
       manifest: {
@@ -33,20 +27,10 @@ export default defineConfig({
         orientation: "portrait",
         background_color: "#ffffff",
         theme_color: "#000000",
-        launch_handler: {
-          client_mode: "auto",
-        },
+        launch_handler: { client_mode: "auto" },
         icons: [
-          {
-            src: "logo192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "logo512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
+          { src: "logo192.png", sizes: "192x192", type: "image/png" },
+          { src: "logo512.png", sizes: "512x512", type: "image/png" },
           {
             src: "icon-maskable.png",
             sizes: "512x512",

@@ -17,7 +17,6 @@ export default function Service() {
   const [address, setAddress] = useState("");
   const [mobile, setMobile] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
-
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
@@ -26,18 +25,26 @@ export default function Service() {
         setCurrentUser(user);
         try {
           const token = await user.getIdToken();
-          const res = await axios.get(`${API_BASE_URL}/subscription/check`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setIsSubscribed(res.data.subscribed);
-          if (res.data.subscribed) {
-            toast.success("You have an active subscription!");
+          const res = await axios.get(
+            `${API_BASE_URL}/subscription/status?userId=${user.uid}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setIsSubscribed(res.data.isSubscribed);
+          if (res.data.isSubscribed) {
+            toast.success(
+              `You have an active subscription! (${res.data.remainingDays} days left)`
+            );
           }
         } catch (error) {
           if (error.response && error.response.status === 401) {
             toast.info("Your session has expired. Please log in again.");
           }
-          console.error("Error checking subscription:", error.response?.data || error.message);
+          console.error(
+            "Error checking subscription:",
+            error.response?.data || error.message
+          );
         }
       } else {
         setCurrentUser(null);
@@ -91,9 +98,57 @@ export default function Service() {
     setShowPopup(true);
     setQuantity(1);
     setAddress("");
+    setMobile("");
   };
 
-  const confirmOrder = async () => {
+  // ✅ Handle Payment Selection
+  const handlePayment = (method) => {
+    if (method === "COD") {
+      confirmOrder("COD");
+    } else {
+      openRazorpay();
+    }
+  };
+
+  // ✅ Open Razorpay Checkout
+  const openRazorpay = async () => {
+    try {
+      const token = await currentUser.getIdToken();
+
+      const { data } = await axios.post(
+        `${API_BASE_URL}/payments/createOnlineorder`,
+        { amount: calculateTotal() }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: data.amount,
+        currency: "INR",
+        name: "Dhobi Service",
+        description: "Laundry Order Payment",
+        order_id: data.orderId,
+        handler: async function (response) {
+          await confirmOrder("ONLINE", response.razorpay_payment_id);
+        },
+        prefill: {
+          name: currentUser.displayName || "User",
+          email: currentUser.email,
+          contact: mobile,
+        },
+        theme: { color: "#4CAF50" },
+      };
+
+      const razor = new window.Razorpay(options);
+      razor.open();
+    } catch (error) {
+      console.error("Razorpay init error:", error);
+      toast.error("Payment failed to initialize.");
+    }
+  };
+
+  // ✅ Confirm Order
+  const confirmOrder = async (paymentMethod = "COD", paymentId = null) => {
     if (!currentUser) {
       toast.error("You must be logged in to place an order.");
       return;
@@ -102,7 +157,6 @@ export default function Service() {
       toast.error("Please enter a valid 10-digit mobile number.");
       return;
     }
-
     if (!address.trim()) {
       toast.error("Please enter a valid address.");
       return;
@@ -117,17 +171,15 @@ export default function Service() {
           serviceId: currentService.id,
           name: currentService.name,
           quantity,
-          price: isSubscribed ? 0 : currentService.price * quantity,
+          price: currentService.price * quantity,
           address,
           mobile,
-          pickupDelivery: isSubscribed ? 0 : 50,
+          pickupDelivery: 50,
           status: "Scheduled",
+          paymentMethod,
+          paymentId,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setShowPopup(false);
@@ -139,9 +191,9 @@ export default function Service() {
     }
   };
 
+  // ✅ Calculate Total
   const calculateTotal = () => {
     if (!currentService) return 0;
-    if (isSubscribed) return 0;
     return currentService.price * quantity + 50;
   };
 
@@ -178,18 +230,7 @@ export default function Service() {
                       </p>
                     </div>
                     <span className="text-gray-900 font-medium">
-                      {isSubscribed ? (
-                        <>
-                          <span className="line-through text-gray-500">
-                            ₹{service.price}
-                          </span>
-                          <span className="ml-2 text-green-600 font-bold">
-                            Subscribed
-                          </span>
-                        </>
-                      ) : (
-                        `₹${service.price}`
-                      )}
+                      ₹{service.price}
                     </span>
                   </div>
 
@@ -201,9 +242,7 @@ export default function Service() {
                         : "bg-green-100 text-gray-800 hover:bg-green-200"
                     }`}
                   >
-                    {isSubscribed
-                      ? "Free with Subscription ✓"
-                      : selectedServices.includes(service.id)
+                    {selectedServices.includes(service.id)
                       ? "Added ✓"
                       : "Add to Order"}
                   </button>
@@ -214,7 +253,7 @@ export default function Service() {
         })}
       </div>
 
-      {/* Fullscreen Popup */}
+      {/* ✅ Fullscreen Popup */}
       {showPopup && currentService && (
         <div className="fixed inset-0 z-50 mb-12 bg-white overflow-y-auto">
           <div className="w-full max-w-sm mx-auto p-6 min-h-screen flex flex-col">
@@ -222,92 +261,107 @@ export default function Service() {
 
             <div className="mb-4">
               <p className="text-gray-600 mb-2">
-                Price per piece:{" "}
-                {isSubscribed ? (
-                  <span className="line-through text-gray-500">
-                    ₹{currentService.price}
-                  </span>
-                ) : (
-                  `₹${currentService.price}`
-                )}
+                Price per piece: ₹{currentService.price}
               </p>
 
-              {!isSubscribed && (
-                <div className="flex items-center mb-4">
-                  <span className="mr-3">Quantity:</span>
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="bg-gray-200 px-3 py-1 rounded-l"
-                  >
-                    -
-                  </button>
-                  <span className="px-4 py-1 bg-gray-100">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="bg-gray-200 px-3 py-1 rounded-r"
-                  >
-                    +
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center mb-4">
+                <span className="mr-3">Quantity:</span>
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="bg-gray-200 px-3 py-1 rounded-l"
+                >
+                  -
+                </button>
+                <span className="px-4 py-1 bg-gray-100">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="bg-gray-200 px-3 py-1 rounded-r"
+                >
+                  +
+                </button>
+              </div>
 
-              {!isSubscribed && (
-                <>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">
-                      Mobile Number:
-                    </label>
-                    <input
-                      type="tel"
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded"
-                      placeholder="Enter 10-digit mobile number"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">
-                      Delivery Address:
-                    </label>
-                    <textarea
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded"
-                      rows={3}
-                      placeholder="Enter full delivery address..."
-                    />
-                  </div>
-                </>
-              )}
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">
+                  Mobile Number:
+                </label>
+                <input
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="Enter 10-digit mobile number"
+                />
+              </div>
 
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">
+                  Delivery Address:
+                </label>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  rows={3}
+                  placeholder="Enter full delivery address..."
+                />
+              </div>
+
+              {/* ✅ Total Section */}
               <div className="border-t border-gray-200 pt-4">
-                <div className="flex justify-between font-bold text-lg">
+                <div className="flex justify-between items-center text-sm mb-2">
+                  <span>Service Price:</span>
+                  <span>₹{currentService.price * quantity}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm mb-2">
+                  <span>Delivery Charges:</span>
+                  <span>₹50</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg items-center">
                   <span>Total:</span>
-                  <span>
-                    {isSubscribed
-                      ? "Free with Subscription"
-                      : `₹${calculateTotal()}`}
+                  <span className="flex items-center gap-2">
+                    {isSubscribed ? (
+                      <>
+                        <span className="line-through text-gray-500">
+                          ₹{calculateTotal()}
+                        </span>
+                        <span className="text-green-600 text-sm font-semibold">
+                          (Subscribed)
+                        </span>
+                      </>
+                    ) : (
+                      <span>₹{calculateTotal()}</span>
+                    )}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 mt-auto">
-              <button
-                onClick={() => {
-                  setShowPopup(false);
-                  toast.info("Order cancelled.");
-                }}
-                className="flex-1 py-2 border border-gray-300 rounded-md"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmOrder}
-                className="flex-1 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-              >
-                {isSubscribed ? "Place Free Order" : "Confirm Order"}
-              </button>
+            {/* ✅ Payment Options */}
+            <div className="mt-auto">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowPopup(false);
+                    toast.info("Order cancelled.");
+                  }}
+                  className="flex-1 py-2 border border-gray-300 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handlePayment("COD")}
+                  className="flex-1 py-2 border border-gray-300 rounded-md"
+                >
+                  Cash on Delivery
+                </button>
+                <button
+                  onClick={() => handlePayment("ONLINE")}
+                  className="flex-1 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                >
+                  Pay Now
+                </button>
+              </div>
             </div>
           </div>
         </div>
