@@ -40,7 +40,11 @@ export default function Orders() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (res.data && Array.isArray(res.data.current) && Array.isArray(res.data.past)) {
+      if (
+        res.data &&
+        Array.isArray(res.data.current) &&
+        Array.isArray(res.data.past)
+      ) {
         setOrders({
           current: res.data.current,
           past: res.data.past,
@@ -95,7 +99,7 @@ export default function Orders() {
   return (
     <div className="min-h-screen max-w-md mx-auto bg-gradient-to-b from-gray-50 to-gray-100 pb-14">
       <ToastContainer position="top-center" autoClose={3000} />
-      
+
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md sticky top-0 z-10">
         <div className="p-4">
@@ -137,9 +141,15 @@ export default function Orders() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-800">{order.name}</h3>
-                        <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(order.status)}`}>
-                         OTP : {order.otp}
+                        <h3 className="font-medium text-gray-800">
+                          {order.name}
+                        </h3>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
+                            order.status
+                          )}`}
+                        >
+                          OTP : {order.otp}
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
@@ -185,15 +195,26 @@ export default function Orders() {
           <div className="text-center py-12">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 max-w-md mx-auto">
               <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                <svg
+                  className="w-8 h-8 text-indigo-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  ></path>
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-700 mb-2">
                 No {activeTab === "current" ? "current" : "past"} orders
               </h3>
               <p className="text-gray-500 text-sm">
-                You don't have any {activeTab === "current" ? "active" : "previous"} orders yet.
+                You don't have any{" "}
+                {activeTab === "current" ? "active" : "previous"} orders yet.
               </p>
             </div>
           </div>
@@ -206,7 +227,9 @@ export default function Orders() {
           <div className="bg-white rounded-xl w-full max-w-md shadow-xl animate-fade-in max-h-[85vh] overflow-y-auto">
             <div className="p-5 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-bold text-gray-800">Order Details</h2>
+                <h2 className="text-lg font-bold text-gray-800">
+                  Order Details
+                </h2>
                 <button
                   onClick={() => setShowDetailModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -224,19 +247,26 @@ export default function Orders() {
                 <div>
                   <p className="text-sm text-gray-500">Order Date</p>
                   <p className="font-medium">
-                    {formatDate(selectedOrder.date)} • {formatTime(selectedOrder.date)}
+                    {formatDate(selectedOrder.date)} •{" "}
+                    {formatTime(selectedOrder.date)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Status</p>
-                  <p className={`font-medium ${getStatusColor(selectedOrder.status)} px-2 py-1 rounded-full inline-block text-xs`}>
+                  <p
+                    className={`font-medium ${getStatusColor(
+                      selectedOrder.status
+                    )} px-2 py-1 rounded-full inline-block text-xs`}
+                  >
                     {selectedOrder.status}
                   </p>
                 </div>
               </div>
 
               <div className="border-t border-gray-200 pt-4">
-                <h3 className="font-medium text-gray-800 mb-2">Order Summary</h3>
+                <h3 className="font-medium text-gray-800 mb-2">
+                  Order Summary
+                </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Service</span>
@@ -244,7 +274,9 @@ export default function Orders() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Quantity</span>
-                    <span className="font-medium">{selectedOrder.quantity}</span>
+                    <span className="font-medium">
+                      {selectedOrder.quantity}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Service Price</span>
@@ -252,18 +284,45 @@ export default function Orders() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Pickup & Delivery</span>
-                    <span className="font-medium">₹{selectedOrder.pickupDelivery}</span>
+                    <span className="font-medium">
+                      ₹{selectedOrder.pickupDelivery}
+                    </span>
+                  </div>
+                  {/* ✅ Payment Details Added Here */}
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Payment Method</span>
+                    <span className="font-medium">
+                      {selectedOrder.paymentMethod}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Payment Status</span>
+                    <span
+                      className={`font-medium ${
+                        selectedOrder.paymentStatus === "Paid"
+                          ? "text-emerald-600"
+                          : selectedOrder.paymentStatus === "Not Paid"
+                          ? "text-rose-600"
+                          : "text-indigo-600"
+                      }`}
+                    >
+                      {selectedOrder.paymentStatus}
+                    </span>
                   </div>
                   <div className="flex justify-between font-bold border-t border-gray-200 pt-3 mt-3">
                     <span>Total Amount</span>
-                    <span className="text-indigo-600">₹{selectedOrder.price + selectedOrder.pickupDelivery}</span>
+                    <span className="text-indigo-600">
+                      ₹{selectedOrder.price + selectedOrder.pickupDelivery}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {selectedOrder.address && (
                 <div className="border-t border-gray-200 pt-4">
-                  <h3 className="font-medium text-gray-800 mb-2">Delivery Address</h3>
+                  <h3 className="font-medium text-gray-800 mb-2">
+                    Delivery Address
+                  </h3>
                   <p className="text-gray-600">{selectedOrder.address}</p>
                 </div>
               )}
@@ -275,17 +334,18 @@ export default function Orders() {
                 </div>
               )}
 
-              {selectedOrder.status !== "Cancelled" && selectedOrder.status === "Scheduled" && (
-                <button
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    setShowCancelConfirm(true);
-                  }}
-                  className="w-full mt-4 py-2.5 bg-rose-50 text-rose-600 font-medium rounded-lg border border-rose-100 hover:bg-rose-100 transition"
-                >
-                  Cancel Order
-                </button>
-              )}
+              {selectedOrder.status !== "Cancelled" &&
+                selectedOrder.status === "Scheduled" && (
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setShowCancelConfirm(true);
+                    }}
+                    className="w-full mt-4 py-2.5 bg-rose-50 text-rose-600 font-medium rounded-lg border border-rose-100 hover:bg-rose-100 transition"
+                  >
+                    Cancel Order
+                  </button>
+                )}
             </div>
           </div>
         </div>
@@ -297,7 +357,9 @@ export default function Orders() {
           <div className="bg-white rounded-xl w-full max-w-md shadow-xl animate-fade-in max-h-[85vh] overflow-y-auto">
             <div className="p-5 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-bold text-gray-800">Order Tracking</h2>
+                <h2 className="text-lg font-bold text-gray-800">
+                  Order Tracking
+                </h2>
                 <button
                   onClick={() => setShowStatusModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -317,7 +379,11 @@ export default function Orders() {
                   <div
                     className="absolute top-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 to-blue-500"
                     style={{
-                      height: `${(statusSteps.indexOf(selectedOrder.status) / (statusSteps.length - 1)) * 100}%`,
+                      height: `${
+                        (statusSteps.indexOf(selectedOrder.status) /
+                          (statusSteps.length - 1)) *
+                        100
+                      }%`,
                     }}
                   ></div>
                 </div>
@@ -325,7 +391,9 @@ export default function Orders() {
                 {/* Steps */}
                 <div className="space-y-6">
                   {statusSteps.map((step, index) => {
-                    const currentIndex = statusSteps.indexOf(selectedOrder.status);
+                    const currentIndex = statusSteps.indexOf(
+                      selectedOrder.status
+                    );
                     const isCompleted = index < currentIndex;
                     const isCurrent = index === currentIndex;
                     const isLast = index === statusSteps.length - 1;
@@ -345,7 +413,11 @@ export default function Orders() {
                         <div>
                           <p
                             className={`font-medium ${
-                              isCurrent ? "text-indigo-600" : isCompleted ? "text-gray-800" : "text-gray-400"
+                              isCurrent
+                                ? "text-indigo-600"
+                                : isCompleted
+                                ? "text-gray-800"
+                                : "text-gray-400"
                             }`}
                           >
                             {step}
@@ -408,7 +480,8 @@ export default function Orders() {
               </h3>
               <div className="mt-2">
                 <p className="text-sm text-gray-500">
-                  Are you sure you want to cancel this order? This action cannot be undone.
+                  Are you sure you want to cancel this order? This action cannot
+                  be undone.
                 </p>
               </div>
             </div>

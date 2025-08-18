@@ -88,7 +88,7 @@ const DeliveryAuth = ({
               onClick={handleRegister}
               className="w-full bg-blue-600 text-white py-3 rounded-lg"
             >
-              Register as {role === "dhobi" ? "Dhobi" : "Delivery Partner"}
+              Register as {role === "dhobi" ? "Vendor" : "Delivery Partner"}
             </button>
             <p className="text-center text-sm mt-4">
               Already registered?{" "}
@@ -128,7 +128,7 @@ const DeliveryAuth = ({
               Sign In
             </button>
             <p className="text-center text-sm mt-4">
-              Don't have an account?{" "}
+              Don't have an account?
               <button
                 onClick={() => setDeliveryStatus("register")}
                 className="text-blue-600"

@@ -17,7 +17,9 @@ export default function Service() {
   const [address, setAddress] = useState("");
   const [mobile, setMobile] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [remainingDays, setRemainingDays] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
+  const [todayOrders, setTodayOrders] = useState(0); // ✅ daily order count
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -32,15 +34,23 @@ export default function Service() {
             }
           );
           setIsSubscribed(res.data.isSubscribed);
-          if (res.data.isSubscribed) {
+          setRemainingDays(res.data.remainingDays || 0);
+
+          // ✅ get today's order count
+          const orderRes = await axios.get(
+            `${API_BASE_URL}/order/todayCount?userId=${user.uid}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setTodayOrders(orderRes.data.count || 0);
+
+          if (res.data.isSubscribed && res.data.remainingDays > 0) {
             toast.success(
               `You have an active subscription! (${res.data.remainingDays} days left)`
             );
+          } else if (res.data.isSubscribed && res.data.remainingDays <= 0) {
+            toast.info("Your subscription has expired. Please renew.");
           }
         } catch (error) {
-          if (error.response && error.response.status === 401) {
-            toast.info("Your session has expired. Please log in again.");
-          }
           console.error(
             "Error checking subscription:",
             error.response?.data || error.message
@@ -49,6 +59,7 @@ export default function Service() {
       } else {
         setCurrentUser(null);
         setIsSubscribed(false);
+        setRemainingDays(0);
       }
     });
 
@@ -101,23 +112,35 @@ export default function Service() {
     setMobile("");
   };
 
-  // ✅ Handle Payment Selection
+  // ✅ check if user can use subscription benefit
+  const canUseSubscription = () => {
+    if (isSubscribed && remainingDays > 0 && todayOrders < 2) {
+      return true;
+    }
+    return false;
+  };
+
+  // ✅ Handle Payment
   const handlePayment = (method) => {
     if (method === "COD") {
       confirmOrder("COD");
     } else {
-      openRazorpay();
+      if (canUseSubscription()) {
+        confirmOrder("SUBSCRIPTION");
+      } else {
+        openRazorpay();
+      }
     }
   };
 
-  // ✅ Open Razorpay Checkout
+  // ✅ Open Razorpay
   const openRazorpay = async () => {
     try {
       const token = await currentUser.getIdToken();
 
       const { data } = await axios.post(
         `${API_BASE_URL}/payments/createOnlineorder`,
-        { amount: calculateTotal() }, 
+        { amount: calculateTotal() },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -178,12 +201,19 @@ export default function Service() {
           status: "Scheduled",
           paymentMethod,
           paymentId,
+          paymentStatus:
+            paymentMethod === "SUBSCRIPTION"
+              ? "Free (Subscribed)"
+              : paymentMethod === "ONLINE"
+              ? "Paid"
+              : "Not Paid",
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setShowPopup(false);
       setSelectedServices([...selectedServices, currentService.id]);
+      setTodayOrders(todayOrders + 1);
       toast.success("Order placed successfully!");
     } catch (error) {
       console.error("Failed to place order:", error);
@@ -267,14 +297,20 @@ export default function Service() {
               <div className="flex items-center mb-4">
                 <span className="mr-3">Quantity:</span>
                 <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  onClick={() =>
+                    setQuantity((prev) =>
+                      canUseSubscription() ? 1 : Math.max(1, prev - 1)
+                    )
+                  }
                   className="bg-gray-200 px-3 py-1 rounded-l"
                 >
                   -
                 </button>
                 <span className="px-4 py-1 bg-gray-100">{quantity}</span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() =>
+                    setQuantity((prev) => (canUseSubscription() ? 1 : prev + 1))
+                  }
                   className="bg-gray-200 px-3 py-1 rounded-r"
                 >
                   +
@@ -320,7 +356,7 @@ export default function Service() {
                 <div className="flex justify-between font-bold text-lg items-center">
                   <span>Total:</span>
                   <span className="flex items-center gap-2">
-                    {isSubscribed ? (
+                    {canUseSubscription() ? (
                       <>
                         <span className="line-through text-gray-500">
                           ₹{calculateTotal()}
@@ -359,7 +395,7 @@ export default function Service() {
                   onClick={() => handlePayment("ONLINE")}
                   className="flex-1 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                 >
-                  Pay Now
+                  {canUseSubscription() ? "Proceed" : "Pay Now"}
                 </button>
               </div>
             </div>
