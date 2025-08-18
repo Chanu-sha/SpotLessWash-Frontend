@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { apiGet, apiPost } from "../api";
+import { apiGet, apiPost } from "../api"; // <- Ensure these have credentials: 'include'
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 const loadRazorpayScript = () =>
@@ -17,34 +17,47 @@ const Subscription = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [remainingDays, setRemainingDays] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setUserId(user.uid); // 👈 Firebase UID as userId
+        setUserId(user.uid);
         refreshStatus(user.uid);
       } else {
         setUserId(null);
         setIsSubscribed(false);
+        setRemainingDays(0);
       }
     });
     return unsubscribe;
   }, []);
 
   const refreshStatus = async (uid) => {
+    setStatusLoading(true);
+    setError(null);
     try {
       const s = await apiGet(`/subscription/status?userId=${uid}`);
       setIsSubscribed(s.isSubscribed);
       setRemainingDays(s.remainingDays || 0);
     } catch (e) {
       console.error(e);
+      setError("Unable to fetch subscription status. Please try again.");
+    } finally {
+      setStatusLoading(false);
     }
   };
 
   const handleSubscribe = async (plan) => {
-    if (!userId) return alert("Please login first");
+    if (!userId) {
+      alert("Please login first");
+      return;
+    }
     setLoading(true);
+    setError(null);
+
     try {
       const ok = await loadRazorpayScript();
       if (!ok) throw new Error("Razorpay SDK failed to load");
@@ -70,7 +83,7 @@ const Subscription = () => {
             alert("Payment successful! Subscription activated.");
           } catch (err) {
             console.error(err);
-            alert("Verification failed");
+            alert("Payment verification failed");
           }
         },
         prefill: {
@@ -85,7 +98,7 @@ const Subscription = () => {
       rzp.open();
     } catch (e) {
       console.error(e);
-      alert(e.message || "Unable to start payment");
+      setError(e.message || "Unable to start payment");
     } finally {
       setLoading(false);
     }
@@ -103,6 +116,12 @@ const Subscription = () => {
           </p>
         </header>
 
+        {error && (
+          <div className="bg-red-100 text-red-800 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
         <div
           className={`rounded-2xl p-6 shadow-inner transition-all duration-300 ${
             isSubscribed ? "bg-green-100" : "bg-gray-50"
@@ -111,11 +130,15 @@ const Subscription = () => {
           <h2 className="text-xl font-bold text-gray-800">
             Your Subscription Status
           </h2>
-          <p className="mt-2 text-lg text-gray-600">
-            {isSubscribed
-              ? `You are subscribed. Your subscription will expire in ${remainingDays} days.`
-              : "You are not currently subscribed."}
-          </p>
+          {statusLoading ? (
+            <p className="mt-2 text-gray-500">Loading status…</p>
+          ) : (
+            <p className="mt-2 text-lg text-gray-600">
+              {isSubscribed
+                ? `You are subscribed. Your subscription will expire in ${remainingDays} days.`
+                : "You are not currently subscribed."}
+            </p>
+          )}
         </div>
 
         {!isSubscribed && userId && (

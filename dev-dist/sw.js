@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-54d0af47'], (function (workbox) { 'use strict';
+define(['./workbox-f8c404e3'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
@@ -82,11 +82,19 @@ define(['./workbox-54d0af47'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "/index.html",
-    "revision": "0.5focpbuke6"
+    "revision": "0.sr4rjs5u1jo"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
     allowlist: [/^\/$/]
   }));
+  workbox.registerRoute(/^https:\/\/(pl\.navifinserv\.com|amazonpay\.amazon\.in)\//, new workbox.NetworkOnly({
+    "cacheName": "payment-gateway-runtime",
+    plugins: []
+  }), 'GET');
+  workbox.registerRoute(/^https:\/\/api\.razorpay\.com\//, new workbox.NetworkOnly({
+    "cacheName": "razorpay-runtime",
+    plugins: []
+  }), 'GET');
 
 }));
