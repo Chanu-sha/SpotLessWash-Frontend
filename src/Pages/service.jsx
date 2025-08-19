@@ -19,7 +19,18 @@ export default function Service() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [remainingDays, setRemainingDays] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
-  const [todayOrders, setTodayOrders] = useState(0); // ✅ daily order count
+  const [todayOrders, setTodayOrders] = useState(0);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false); // ✅ track script load
+
+  // ✅ Load Razorpay script once
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => setRazorpayLoaded(true);
+    script.onerror = () => toast.error("Failed to load Razorpay SDK!");
+    document.body.appendChild(script);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -112,12 +123,8 @@ export default function Service() {
     setMobile("");
   };
 
-  // ✅ check if user can use subscription benefit
   const canUseSubscription = () => {
-    if (isSubscribed && remainingDays > 0 && todayOrders < 2) {
-      return true;
-    }
-    return false;
+    return isSubscribed && remainingDays > 0 && todayOrders < 2;
   };
 
   // ✅ Handle Payment
@@ -135,6 +142,11 @@ export default function Service() {
 
   // ✅ Open Razorpay
   const openRazorpay = async () => {
+    if (!razorpayLoaded || !window.Razorpay) {
+      toast.error("Razorpay SDK not loaded yet. Please try again.");
+      return;
+    }
+
     try {
       const token = await currentUser.getIdToken();
 
@@ -221,7 +233,6 @@ export default function Service() {
     }
   };
 
-  // ✅ Calculate Total
   const calculateTotal = () => {
     if (!currentService) return 0;
     return currentService.price * quantity + 50;
@@ -343,7 +354,6 @@ export default function Service() {
                 />
               </div>
 
-              {/* ✅ Total Section */}
               <div className="border-t border-gray-200 pt-4">
                 <div className="flex justify-between items-center text-sm mb-2">
                   <span>Service Price:</span>
@@ -373,7 +383,6 @@ export default function Service() {
               </div>
             </div>
 
-            {/* ✅ Payment Options */}
             <div className="mt-auto">
               <div className="flex gap-3">
                 <button
