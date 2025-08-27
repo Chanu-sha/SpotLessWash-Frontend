@@ -12,28 +12,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       devOptions: { enabled: true },
       workbox: {
-        globPatterns: [
-          "**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2,webp}"
-        ],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2,webp}"],
         navigateFallback: "/index.html",
-        runtimeCaching: [
-          {
-            // Amazon Pay + NaviFinserv manifests & assets
-            urlPattern: /^https:\/\/(pl\.navifinserv\.com|amazonpay\.amazon\.in)\//,
-            handler: "NetworkOnly",
-            options: {
-              cacheName: "payment-gateway-runtime"
-            }
-          },
-          {
-            // Razorpay API calls
-            urlPattern: /^https:\/\/api\.razorpay\.com\//,
-            handler: "NetworkOnly",
-            options: {
-              cacheName: "razorpay-runtime"
-            }
-          }
-        ]
       },
       manifest: {
         id: "/",
@@ -55,10 +35,10 @@ export default defineConfig({
             src: "icon-maskable.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "maskable"
-          }
-        ]
-      }
-    })
-  ]
+            purpose: "maskable",
+          },
+        ],
+      },
+    }),
+  ],
 });

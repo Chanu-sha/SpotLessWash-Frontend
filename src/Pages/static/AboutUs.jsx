@@ -2,15 +2,15 @@ import {
   FaHandsHelping,
   FaTruck,
   FaTshirt,
-  FaSmile,
   FaSuitcase,
   FaFemale,
   FaStar,
 } from "react-icons/fa";
 import { PiUsersThreeLight } from "react-icons/pi";
 import { GiClothes } from "react-icons/gi";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
+import Header from "../../components/Header";
+
 
 export default function AboutUs() {
   return (

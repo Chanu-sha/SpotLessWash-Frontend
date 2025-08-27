@@ -1,4 +1,3 @@
-import React from "react";
 import { FiUser, FiLock } from "react-icons/fi";
 import { toast } from "react-toastify";
 

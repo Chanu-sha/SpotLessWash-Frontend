@@ -1,6 +1,7 @@
-import React from "react";
-import { FiUser, FiPhone, FiPhoneCall, FiMail, FiLock } from "react-icons/fi";
+import React, { useContext } from "react";
+import { FiUser, FiMail, FiPhone, FiLock } from "react-icons/fi";
 import { toast } from "react-toastify";
+import { UserContext } from "../../context/UserContext";
 
 const DeliveryAuth = ({
   deliveryForm,
@@ -9,135 +10,146 @@ const DeliveryAuth = ({
   setDeliveryStatus,
   API_BASE_URL,
   navigate,
-  role,
 }) => {
   const isRegistering = deliveryStatus === "register";
 
+  // Register handler
   const handleRegister = async () => {
-    const res = await fetch(`${API_BASE_URL}/${role}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(deliveryForm),
-    });
-    const data = await res.json();
-    res.ok
-      ? (toast.success(data.message), setDeliveryStatus("pending"))
-      : toast.error(data.message);
-  };
-  const handleLogin = async () => {
-    const res = await fetch(`${API_BASE_URL}/${role}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(deliveryForm),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      if (role === "dhobi") {
-        localStorage.setItem("dhobiToken", data.token);
+    try {
+      const res = await fetch(`${API_BASE_URL}/deliveryboy/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(deliveryForm),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        setDeliveryStatus("pending");
       } else {
-        localStorage.setItem("deliveryToken", data.token);
+        toast.error(data.message);
       }
-      toast.success("Login successful");
-      navigate("/profile");
-    } else {
-      toast.error(data.message);
-      if (data.message.includes("Not approved")) setDeliveryStatus("pending");
+    } catch (err) {
+      console.error(" Register error:", err);
+      toast.error("Something went wrong while registering");
+    }
+  };
+  const { updateRole } = useContext(UserContext);
+  // Login handler
+  const handleLogin = async () => {
+    const { phone, password } = deliveryForm;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/deliveryboy/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("deliveryToken", data.token);
+        updateRole();
+        toast.success("Login successful");
+        navigate("/delieveryprofile");
+      } else {
+        toast.error(data.message || "Login failed");
+        if (data.message?.includes("Not approved")) {
+          setDeliveryStatus("pending");
+        }
+      }
+    } catch (err) {
+      console.error("Login Request Error:", err);
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
   return (
     <>
       {isRegistering ? (
-        <>
-          <div className="space-y-4">
-            <Input
-              icon={<FiUser />}
-              placeholder="Full Name"
-              value={deliveryForm.name}
-              onChange={(val) =>
-                setDeliveryForm({ ...deliveryForm, name: val })
-              }
-            />
-            <Input
-              icon={<FiMail />}
-              placeholder="Email"
-              value={deliveryForm.email}
-              type="email"
-              onChange={(val) =>
-                setDeliveryForm({ ...deliveryForm, email: val })
-              }
-            />
-            <Input
-              icon={<FiPhone />}
-              placeholder="Phone Number"
-              value={deliveryForm.phone}
-              onChange={(val) =>
-                setDeliveryForm({ ...deliveryForm, phone: val })
-              }
-            />
-            <Input
-              icon={<FiLock />}
-              placeholder="Password"
-              value={deliveryForm.password}
-              type="password"
-              onChange={(val) =>
-                setDeliveryForm({ ...deliveryForm, password: val })
-              }
-            />
+        <div className="space-y-4">
+          <Input
+            icon={<FiUser />}
+            placeholder="Full Name"
+            value={deliveryForm.name}
+            onChange={(val) => setDeliveryForm({ ...deliveryForm, name: val })}
+          />
+          <Input
+            icon={<FiMail />}
+            placeholder="Email"
+            type="email"
+            value={deliveryForm.email}
+            onChange={(val) => setDeliveryForm({ ...deliveryForm, email: val })}
+          />
+          <Input
+            icon={<FiPhone />}
+            placeholder="Phone Number"
+            value={deliveryForm.phone}
+            onChange={(val) => setDeliveryForm({ ...deliveryForm, phone: val })}
+          />
+          <Input
+            icon={<FiLock />}
+            placeholder="Password"
+            type="password"
+            value={deliveryForm.password}
+            onChange={(val) =>
+              setDeliveryForm({ ...deliveryForm, password: val })
+            }
+          />
+
+          <button
+            onClick={handleRegister}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg"
+          >
+            Register as Delivery Partner
+          </button>
+
+          <p className="text-center text-sm mt-4">
+            Already registered?{" "}
             <button
-              onClick={handleRegister}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg"
+              onClick={() => setDeliveryStatus("login")}
+              className="text-blue-600"
             >
-              Register as {role === "dhobi" ? "Vendor" : "Delivery Partner"}
+              Login here
             </button>
-            <p className="text-center text-sm mt-4">
-              Already registered?{" "}
-              <button
-                onClick={() => setDeliveryStatus("login")}
-                className="text-blue-600"
-              >
-                Login here
-              </button>
-            </p>
-          </div>
-        </>
+          </p>
+        </div>
       ) : (
-        <>
-          <div className="space-y-4">
-            <Input
-              icon={<FiPhoneCall />}
-              placeholder="Phone Number"
-              value={deliveryForm.phone}
-              onChange={(val) =>
-                setDeliveryForm({ ...deliveryForm, phone: val })
-              }
-            />
-            <Input
-              icon={<FiLock />}
-              placeholder="Password"
-              type="password"
-              value={deliveryForm.password}
-              onChange={(val) =>
-                setDeliveryForm({ ...deliveryForm, password: val })
-              }
-            />
+        <div className="space-y-4">
+          <Input
+            icon={<FiPhone />}
+            placeholder="Phone Number"
+            value={deliveryForm.phone}
+            onChange={(val) => setDeliveryForm({ ...deliveryForm, phone: val })}
+          />
+          <Input
+            icon={<FiLock />}
+            placeholder="Password"
+            type="password"
+            value={deliveryForm.password}
+            onChange={(val) =>
+              setDeliveryForm({ ...deliveryForm, password: val })
+            }
+          />
+
+          <button
+            onClick={handleLogin}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg"
+          >
+            Sign In
+          </button>
+
+          <p className="text-center text-sm mt-4">
+            Don’t have an account?{" "}
             <button
-              onClick={handleLogin}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg"
+              onClick={() => setDeliveryStatus("register")}
+              className="text-blue-600"
             >
-              Sign In
+              Register here
             </button>
-            <p className="text-center text-sm mt-4">
-              Don't have an account?
-              <button
-                onClick={() => setDeliveryStatus("register")}
-                className="text-blue-600"
-              >
-                Register here
-              </button>
-            </p>
-          </div>
-        </>
+          </p>
+        </div>
       )}
 
       {deliveryStatus === "pending" && (

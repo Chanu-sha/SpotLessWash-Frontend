@@ -31,14 +31,19 @@ export default function Orders() {
 
   const fetchOrders = async () => {
     setLoading(true);
-    const user = auth.currentUser;
-    if (!user) return;
-
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       const token = await user.getIdToken();
       const res = await axios.get(`${API_BASE_URL}/order/my-orders`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      const sortByDateDesc = (arr) =>
+        arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       if (
         res.data &&
@@ -46,11 +51,23 @@ export default function Orders() {
         Array.isArray(res.data.past)
       ) {
         setOrders({
-          current: res.data.current,
-          past: res.data.past,
+          current: sortByDateDesc(res.data.current),
+          past: sortByDateDesc(res.data.past),
+        });
+      } else if (res.data && Array.isArray(res.data)) {
+        const current = res.data.filter(
+          (o) => o.status !== "Delivered" && o.status !== "Cancelled"
+        );
+        const past = res.data.filter(
+          (o) => o.status === "Delivered" || o.status === "Cancelled"
+        );
+        setOrders({
+          current: sortByDateDesc(current),
+          past: sortByDateDesc(past),
         });
       } else {
         console.error("Unexpected response format:", res.data);
+        toast.error("Failed to parse orders response");
       }
     } catch (err) {
       console.error("Error fetching orders", err);
@@ -96,9 +113,58 @@ export default function Orders() {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        toast.error("You must be logged in to cancel an order.");
+        return;
+      }
+      const token = await user.getIdToken();
+
+      if (selectedOrder.status === "Cancelled") {
+        toast.info("Order is already cancelled.");
+        setShowCancelConfirm(false);
+        return;
+      }
+
+      if (selectedOrder.status !== "Scheduled") {
+        toast.warn("Order can't be cancelled at this stage.");
+        setShowCancelConfirm(false);
+        return;
+      }
+
+      await axios.patch(
+        `${API_BASE_URL}/order/${selectedOrder._id}/status`,
+        { status: "Cancelled" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Order cancelled successfully.");
+      setShowCancelConfirm(false);
+      setShowDetailModal(false);
+      // refresh orders
+      fetchOrders();
+    } catch (err) {
+      console.error("Error cancelling order:", err);
+      toast.error("Error cancelling order.");
+    }
+  };
+
   return (
     <div className="min-h-screen max-w-md mx-auto bg-gradient-to-b from-gray-50 to-gray-100 pb-14">
-      <ToastContainer position="top-center" autoClose={3000} />
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
 
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md sticky top-0 z-10">
@@ -141,9 +207,18 @@ export default function Orders() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-800">
-                          {order.name}
-                        </h3>
+                        <div>
+                          <h3 className="font-medium text-gray-800">
+                            {order.vendorName ||
+                              order.vendorAddress ||
+                              "Vendor"}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {order.userName
+                              ? `Placed by ${order.userName}`
+                              : ""}
+                          </p>
+                        </div>
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
                             order.status
@@ -152,18 +227,20 @@ export default function Orders() {
                           OTP : {order.otp}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Order ID: {order._id.slice(-8).toUpperCase()}
-                      </p>
+                      <span className="text-gray-600">
+                        {order.services[0]?.name} (x
+                        {order.services[0]?.quantity})
+                      </span>
                       <p className="text-sm text-gray-500">
-                        {formatDate(order.date)} • {formatTime(order.date)}
+                        {formatDate(order.createdAt)} •{" "}
+                        {formatTime(order.createdAt)}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-3 flex justify-between items-center">
                     <p className="font-medium text-gray-900">
-                      ₹{order.price + order.pickupDelivery}
+                      ₹{order.totalPrice}
                     </p>
                     <div className="flex space-x-2">
                       <button
@@ -173,7 +250,7 @@ export default function Orders() {
                         }}
                         className="text-indigo-600 text-sm font-medium flex items-center hover:text-indigo-800"
                       >
-                        Track <IoIosArrowForward className="ml-1" />
+                        Check Status <IoIosArrowForward className="ml-1" />
                       </button>
                     </div>
                   </div>
@@ -213,7 +290,7 @@ export default function Orders() {
                 No {activeTab === "current" ? "current" : "past"} orders
               </h3>
               <p className="text-gray-500 text-sm">
-                You don't have any{" "}
+                You don't have any
                 {activeTab === "current" ? "active" : "previous"} orders yet.
               </p>
             </div>
@@ -247,8 +324,8 @@ export default function Orders() {
                 <div>
                   <p className="text-sm text-gray-500">Order Date</p>
                   <p className="font-medium">
-                    {formatDate(selectedOrder.date)} •{" "}
-                    {formatTime(selectedOrder.date)}
+                    {formatDate(selectedOrder.createdAt)} •{" "}
+                    {formatTime(selectedOrder.createdAt)}
                   </p>
                 </div>
                 <div>
@@ -263,95 +340,86 @@ export default function Orders() {
                 </div>
               </div>
 
+              {/* Order Summary */}
               <div className="border-t border-gray-200 pt-4">
                 <h3 className="font-medium text-gray-800 mb-2">
                   Order Summary
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Service</span>
-                    <span className="font-medium">{selectedOrder.name}</span>
+                  {Array.isArray(selectedOrder.services) &&
+                  selectedOrder.services.length > 0 ? (
+                    selectedOrder.services.map((s, i) => (
+                      <div
+                        key={i}
+                        className="flex justify-between border-b pb-2 text-sm"
+                      >
+                        <span className="text-gray-600">
+                          {s.name} (x{s.quantity})
+                        </span>
+                        <span className="font-medium">₹{s.price}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-gray-500">
+                      No services listed
+                    </div>
+                  )}
+
+                  <div className="flex justify-between font-semibold border-t border-gray-200 pt-3 mt-3">
+                    <span>Delivery Charges :</span>
+                    <span className="text-indigo-600">₹50</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Quantity</span>
-                    <span className="font-medium">
-                      {selectedOrder.quantity}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Service Price</span>
-                    <span className="font-medium">₹{selectedOrder.price}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Pickup & Delivery</span>
-                    <span className="font-medium">
-                      ₹{selectedOrder.pickupDelivery}
-                    </span>
-                  </div>
-                  {/* ✅ Payment Details Added Here */}
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Method</span>
-                    <span className="font-medium">
-                      {selectedOrder.paymentMethod}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Status</span>
-                    <span
-                      className={`font-medium ${
-                        selectedOrder.paymentStatus === "Paid"
-                          ? "text-emerald-600"
-                          : selectedOrder.paymentStatus === "Not Paid"
-                          ? "text-rose-600"
-                          : "text-indigo-600"
-                      }`}
-                    >
-                      {selectedOrder.paymentStatus}
+
+                  <div className="flex justify-between font-semibold border-t border-gray-200 pt-3 mt-3">
+                    <span>Service Amount :</span>
+                    <span className="text-indigo-600">
+                      ₹{selectedOrder.totalPrice}
                     </span>
                   </div>
                   <div className="flex justify-between font-bold border-t border-gray-200 pt-3 mt-3">
                     <span>Total Amount</span>
                     <span className="text-indigo-600">
-                      ₹{selectedOrder.price + selectedOrder.pickupDelivery}
+                      ₹{selectedOrder.totalPrice + 50}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {selectedOrder.address && (
-                <div className="border-t border-gray-200 pt-4">
-                  <h3 className="font-medium text-gray-800 mb-2">
-                    Delivery Address
-                  </h3>
-                  <p className="text-gray-600">{selectedOrder.address}</p>
-                </div>
-              )}
+              {/* Address */}
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="font-medium text-gray-800 mb-2">
+                  Delivery Address
+                </h3>
+                <p className="text-gray-600">
+                  {selectedOrder.userAddress || "N/A"}
+                </p>
+              </div>
 
-              {selectedOrder.mobile && (
-                <div className="border-t border-gray-200 pt-4">
-                  <h3 className="font-medium text-gray-800 mb-2">Contact</h3>
-                  <p className="text-gray-600">{selectedOrder.mobile}</p>
-                </div>
-              )}
+              {/* Contact */}
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="font-medium text-gray-800 mb-2">Contact</h3>
+                <p className="text-gray-600">
+                  {selectedOrder.userMobile || "N/A"}
+                </p>
+              </div>
 
-              {selectedOrder.status !== "Cancelled" &&
-                selectedOrder.status === "Scheduled" && (
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      setShowCancelConfirm(true);
-                    }}
-                    className="w-full mt-4 py-2.5 bg-rose-50 text-rose-600 font-medium rounded-lg border border-rose-100 hover:bg-rose-100 transition"
-                  >
-                    Cancel Order
-                  </button>
-                )}
+              {selectedOrder.status === "Scheduled" && (
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setShowCancelConfirm(true);
+                  }}
+                  className="w-full mt-4 py-2.5 bg-rose-50 text-rose-600 font-medium rounded-lg border border-rose-100 hover:bg-rose-100 transition"
+                >
+                  Cancel Order
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Order Tracking Modal */}
+      {/* Tracking Modal */}
       {showStatusModal && selectedOrder && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 pb-20">
           <div className="bg-white rounded-xl w-full max-w-md shadow-xl animate-fade-in max-h-[85vh] overflow-y-auto">
@@ -380,7 +448,10 @@ export default function Orders() {
                     className="absolute top-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 to-blue-500"
                     style={{
                       height: `${
-                        (statusSteps.indexOf(selectedOrder.status) /
+                        (Math.max(
+                          0,
+                          statusSteps.indexOf(selectedOrder.status)
+                        ) /
                           (statusSteps.length - 1)) *
                         100
                       }%`,
@@ -429,7 +500,11 @@ export default function Orders() {
                           )}
                           {isCompleted && (
                             <p className="text-xs text-gray-500 mt-1">
-                              Completed on {formatDate(selectedOrder.updatedAt)}
+                              Completed on{" "}
+                              {formatDate(
+                                selectedOrder.updatedAt ||
+                                  selectedOrder.createdAt
+                              )}
                             </p>
                           )}
                         </div>
@@ -456,7 +531,7 @@ export default function Orders() {
       )}
 
       {/* Cancel Confirmation Modal */}
-      {showCancelConfirm && (
+      {showCancelConfirm && selectedOrder && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl w-full max-w-sm shadow-xl animate-fade-in">
             <div className="p-5 text-center">
@@ -494,34 +569,7 @@ export default function Orders() {
               </button>
               <button
                 onClick={async () => {
-                  const token = await auth.currentUser?.getIdToken();
-
-                  if (selectedOrder.status === "Cancelled") {
-                    toast.info("Order is already cancelled.");
-                    setShowCancelConfirm(false);
-                    return;
-                  }
-
-                  if (selectedOrder.status !== "Scheduled") {
-                    toast.warn("Order can't be cancelled at this stage.");
-                    setShowCancelConfirm(false);
-                    return;
-                  }
-
-                  try {
-                    await axios.patch(
-                      `${API_BASE_URL}/order/${selectedOrder._id}/status`,
-                      { status: "Cancelled" },
-                      { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                    toast.success("Order cancelled successfully.");
-                    setShowCancelConfirm(false);
-                    setShowDetailModal(false);
-                    fetchOrders();
-                  } catch (err) {
-                    toast.error("Error cancelling order.");
-                    console.error("Error cancelling order:", err);
-                  }
+                  await handleCancelOrder();
                 }}
                 className="flex-1 px-4 py-2 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
               >

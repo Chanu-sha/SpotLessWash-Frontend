@@ -1,6 +1,7 @@
+
+import { FaMapMarkerAlt, FaPhone, FaPaperPlane } from "react-icons/fa";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { FaMapMarkerAlt, FaPhone, FaPaperPlane } from "react-icons/fa";
 
 export default function ContactUs() {
   return (

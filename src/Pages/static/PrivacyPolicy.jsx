@@ -1,5 +1,6 @@
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
+import Header from "../../components/Header";
+
 
 export default function PrivacyPolicy() {
   return (
@@ -141,8 +142,8 @@ export default function PrivacyPolicy() {
                   <h2 className="text-xl font-bold text-gray-800">Contact Us</h2>
                 </div>
                 <p className="text-gray-600">
-                  If you have any questions regarding your privacy, please email us at{" "}
-                  <span className="text-green-600 font-semibold hover:underline">support@spotlesswah.in</span>.
+                  If you have any questions regarding your privacy, please email us at
+                  <span className="text-green-600 font-semibold hover:underline ml-1.5">spotlesswash@proton.me</span>
                 </p>
               </div>
             </div>

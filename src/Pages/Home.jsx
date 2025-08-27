@@ -1,4 +1,3 @@
-import { FaStar } from "react-icons/fa";
 import {
   PiCoatHangerLight,
   PiTruckLight,
@@ -13,11 +12,11 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
-import { UserContext } from "../context/UserContext"; // ✅ Import context
+import { UserContext } from "../context/UserContext"; 
 
 export default function Home() {
   const navigate = useNavigate();
-  const { role } = useContext(UserContext); // ✅ Get role from context
+  const { role } = useContext(UserContext);
   const areas = ["Bhubaneswar", "Cuttack", "Puri"];
   const stars = Array(5).fill(0);
 
@@ -31,22 +30,21 @@ export default function Home() {
       setCurrentIndex((prevIndex) =>
         prevIndex === images.length - 1 ? 0 : prevIndex + 1
       );
-    }, 2500); // 2.5 seconds
+    }, 2500); 
     return () => clearInterval(interval);
   }, [images.length]);
 
-  // ✅ Decide button text & navigation based on role
   const getButtonText = () => {
     if (role === "delivery") return "Get a Delivery";
-    if (role === "dhobi") return "Get a Deal";
+    if (role === "vendor") return "Get a Deal";
     return "Book Now";
   };
 
   const handleButtonClick = () => {
     if (role === "delivery") {
-      navigate("/delivery-dashboard"); // change path as needed
-    } else if (role === "dhobi") {
-      navigate("/dhobi-dashboard"); // change path as needed
+      navigate("/delivery-dashboard"); 
+    } else if (role === "vendor") {
+      navigate("/vendor-dashboard"); 
     } else {
       navigate("/service");
     }

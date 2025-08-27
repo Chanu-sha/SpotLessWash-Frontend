@@ -7,7 +7,9 @@ function AssignedDeals() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("washing");
-  const token = localStorage.getItem("dhobiToken");
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const token = localStorage.getItem("vendorToken");
 
   const fetchAssignedOrders = async () => {
     try {
@@ -27,9 +29,16 @@ function AssignedDeals() {
     }
   };
 
-  const markAsWashed = async (orderId) => {
+  const handleMarkAsWashed = (orderId) => {
+    setSelectedOrderId(orderId);
+    setShowConfirmPopup(true);
+  };
+
+  const handleConfirmWashed = async () => {
+    if (!selectedOrderId) return;
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/order/${orderId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/order/${selectedOrderId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -48,12 +57,20 @@ function AssignedDeals() {
         return;
       }
 
-      toast.success("✅ Order marked as Washed!");
+      toast.success("Order marked as Washed!");
       fetchAssignedOrders();
     } catch (err) {
       console.error("Failed to update order status:", err);
       toast.error("Error updating status");
+    } finally {
+      setShowConfirmPopup(false);
+      setSelectedOrderId(null);
     }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirmPopup(false);
+    setSelectedOrderId(null);
   };
 
   useEffect(() => {
@@ -80,7 +97,51 @@ function AssignedDeals() {
 
   return (
     <div className="min-h-screen max-w-md mx-auto bg-gray-50 p-4 md:p-6">
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      
+      {/* Confirmation Popup */}
+      {showConfirmPopup && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
+            <div className="text-center mb-4">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                <span className="text-yellow-600 text-2xl">⚠️</span>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Confirm Mark as Washed
+              </h3>
+              <p className="text-sm text-gray-600">
+                Once you mark this order as washed, you cannot reverse or cancel it. Are you sure you want to proceed?
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleCancelConfirm}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmWashed}
+                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
@@ -168,10 +229,13 @@ function AssignedDeals() {
               >
                 <div className="p-5">
                   <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-semibold text-gray-800 truncate">
-                      {order.name}
-                    </h3>
-                    <div className="flex flex-col  items-center space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl">👤</span>
+                      <h3 className="text-lg font-semibold text-gray-800 truncate">
+                        {order.userName}
+                      </h3>
+                    </div>
+                    <div className="flex gap-1.5 justify-center items-center ">
                       <span className={getStatusBadge(order.status)}>
                         {order.status}
                       </span>
@@ -184,111 +248,71 @@ function AssignedDeals() {
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    <div className="flex items-center text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                        />
-                      </svg>
-                      <span>Quantity: {order.quantity}</span>
-                    </div>
-
-                    <div className="flex items-center text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      <span className="truncate">{order.address}</span>
-                    </div>
-
-                    <div className="flex items-center text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                        />
-                      </svg>
-                      <span>{order.mobile}</span>
-                    </div>
-
-                    <div className="flex items-center text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                      <span>
-                        Agent:{" "}
-                        <span className="font-medium">
-                          {order.claimedBy?.name || "Not assigned"}
+                    <div className="flex items-center space-x-2">
+                      <span className="text-md">📞</span>
+                      <p>
+                        <span className="text-gray-600  mr-1.5">
+                          Client Mobile:
                         </span>
-                      </span>
+                        <span className="text-black italic ">
+                          {order.userMobile}
+                        </span>
+                      </p>
                     </div>
 
-                    <div className="flex items-center text-gray-500 text-sm">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <span>{new Date(order.date).toLocaleString()}</span>
+                    {order.pickupClaimedBy ? (
+                      <div className="flex flex-col justify-centerusti space-x-2">
+                        <p>
+                          <span className="text-gray-600 mr-2">🚚 Agent:</span>
+                          <span className="text-black italic">
+                            {order.pickupClaimedBy.name}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="text-gray-600 mr-2">
+                            🚚 Agent Contact:
+                          </span>
+                          <span className="text-black italic">
+                            {order.pickupClaimedBy.phone}
+                          </span>
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col justify-centerusti space-x-2">
+                        <p>
+                          <span className="text-gray-600 mr-2">🚚 Agent:</span>
+                          <span className="text-black italic">
+                            Not Assigned Yet
+                          </span>
+                        </p>
+                        <p>
+                          <span className="text-gray-600 mr-2">
+                            🚚 Agent Contact:
+                          </span>
+                          <span className="text-black italic">
+                            Not Assigned Yet
+                          </span>
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="text-gray-700 flex">
+                      🧺 Services:
+                      {order.services?.map((s, idx) => (
+                        <div key={idx} className="ml-4 italic">
+                          {s.name} × {s.quantity} = ₹{s.price * s.quantity}
+                        </div>
+                      ))}
                     </div>
+                    <p className="font-bold mt-2">Total: ₹{order.totalPrice}</p>
+                    <p className="text-gray-500 text-sm">
+                      ⏰ {new Date(order.createdAt).toLocaleString()}
+                    </p>
                   </div>
 
                   {activeTab === "washing" && (
                     <button
-                      onClick={() => markAsWashed(order._id)}
+                      onClick={() => handleMarkAsWashed(order._id)}
                       className="mt-4 w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2 px-4 rounded-lg shadow-sm font-medium transition-all transform hover:scale-[1.02]"
                     >
                       Mark as Washed

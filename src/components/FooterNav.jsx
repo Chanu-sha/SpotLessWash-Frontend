@@ -10,7 +10,13 @@ import { GiClothes } from "react-icons/gi";
 
 export default function FooterNav() {
   const location = useLocation();
-  const { role } = useContext(UserContext);
+  const { role, loading } = useContext(UserContext);
+
+  // Hide footer on admin panel page
+  if (location.pathname === "/admin-panel") {
+    return null;
+  }
+
 
   const isActive = (path) => location.pathname === path;
 
@@ -20,31 +26,32 @@ export default function FooterNav() {
     } hover:text-blue-500`;
 
   const navItems = {
-    delivery: [
+    default: [
       { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
-      { to: "/delivery-dashboard", icon: <FaTruckFast className="w-6 h-6" />, text: "All Orders" },
-      { to: "/my-deals", icon: <FaClipboardList className="w-6 h-6" />, text: "My Deals" },
-      { to: "/profile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
-    ],
-    dhobi: [
-      { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
-      { to: "/dhobi-dashboard", icon: <MdDryCleaning className="w-6 h-6" />, text: "My Orders" },
-      { to: "/dhobi-assigned", icon: <GiClothes className="w-6 h-6" />, text: "Assigned" },
-      { to: "/profile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+      { to: "/service", icon: <GiClothes className="w-6 h-6" />, text: "Services" },
+      { to: "/orders", icon: <FaClipboardList className="w-6 h-6" />, text: "Orders" },
+      { to: "/userprofile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
     ],
     firebase: [
       { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
       { to: "/service", icon: <GiClothes className="w-6 h-6" />, text: "Services" },
       { to: "/orders", icon: <FaClipboardList className="w-6 h-6" />, text: "Orders" },
-      { to: "/profile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+      { to: "/userprofile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
     ],
-    default: [
+    delivery: [
       { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
       { to: "/delivery-dashboard", icon: <FaTruckFast className="w-6 h-6" />, text: "All Orders" },
       { to: "/my-deals", icon: <FaClipboardList className="w-6 h-6" />, text: "My Deals" },
-      { to: "/profile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+      { to: "/delieveryprofile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+    ],
+    vendor: [
+      { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
+      { to: "/vendor-dashboard", icon: <MdDryCleaning className="w-6 h-6" />, text: "My Orders" },
+      { to: "/vendor-assigned", icon: <GiClothes className="w-6 h-6" />, text: "Assigned" },
+      { to: "/vendorprofile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
     ],
   };
+
 
   const currentNav = navItems[role] || navItems.default;
 

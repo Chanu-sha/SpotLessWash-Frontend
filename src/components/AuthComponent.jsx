@@ -1,11 +1,18 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
-import { FiUser, FiTruck, FiUserCheck, FiLock, FiArrowLeft } from "react-icons/fi";
+import {
+  FiUser,
+  FiTruck,
+  FiUserCheck,
+  FiLock,
+  FiArrowLeft,
+} from "react-icons/fi";
 import "react-toastify/dist/ReactToastify.css";
 
 import UserAuth from "./auth/UserAuth";
 import DeliveryAuth from "./auth/DeliveryAuth";
+import VendorAuth from "./auth/VendorAuth";
 import AdminAuth from "./auth/AdminAuth";
 
 const AuthComponent = () => {
@@ -21,7 +28,7 @@ const AuthComponent = () => {
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
 
-  // Shared delivery/dhobi form state
+  // Delivery states
   const [deliveryForm, setDeliveryForm] = useState({
     name: "",
     email: "",
@@ -30,42 +37,69 @@ const AuthComponent = () => {
   });
   const [deliveryStatus, setDeliveryStatus] = useState("login");
 
-  // Admin credentials
+  // Vendor  states
+  const [vendorForm, setVendorForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    address: "",
+    photo: "",
+    services: [],
+  });
+  const [vendorStatus, setVendorStatus] = useState("login");
+
+  // Admin states
   const [adminCreds, setAdminCreds] = useState({
     username: "",
     password: "",
   });
 
-  const sendTokenToBackend = async (user) => {
-    try {
-      const token = await user.getIdToken();
-      const res = await fetch(`${API_BASE_URL}/user/login`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+const sendTokenToBackend = async (user) => {
+  try {
+    const token = await user.getIdToken(true); 
 
-      if (data.user) {
-        toast.success("Login successful!");
-        if (!data.user.name || !data.user.phone || !data.user.address) {
-          toast.info("Complete your profile to proceed.");
-        }
-        navigate("/profile");
-      } else {
-        toast.error("Failed to sync user with backend");
-      }
-    } catch (error) {
-      toast.error("Error during backend login");
+    const res = await fetch(`${API_BASE_URL}/user/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ email: user.email }) 
+    });
+
+    const data = await res.json();
+
+    if (data.user) {
+      toast.success("Login successful!");
+      navigate("/userprofile");
+    } else {
+      toast.error("Failed to sync user with backend");
     }
-  };
+  } catch (error) {
+    console.error(" Backend Login Error:", error);
+    toast.error("Error during backend login");
+  }
+};
+
 
   const resetRole = () => {
     setActiveRole("user");
     setEmail("");
     setPassword("");
     setDeliveryForm({ name: "", email: "", phone: "", password: "" });
+    setVendorForm({
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      address: "",
+      photo: "",
+      services: [],
+    });
     setAdminCreds({ username: "", password: "" });
     setDeliveryStatus("login");
+    setVendorStatus("login");
     setIsRegistering(false);
   };
 
@@ -85,8 +119,17 @@ const AuthComponent = () => {
 
   return (
     <div className="min-h-screen max-w-md mx-auto">
-      <ToastContainer position="top-center" autoClose={3000} />
-
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <div className="w-full max-w-md">
         <div className="bg-white overflow-hidden">
           {/* HEADER */}
@@ -113,6 +156,7 @@ const AuthComponent = () => {
                         const role = e.target.value;
                         setActiveRole(role);
                         setDeliveryStatus("login");
+                        setVendorStatus("login");
                         if (role !== "user") setShowDropdown(false);
                       }}
                       className="w-full px-3 py-1 bg-white/20 border border-white/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-white text-white"
@@ -143,9 +187,15 @@ const AuthComponent = () => {
                     ? isRegistering
                       ? "Join us today"
                       : "Sign in to continue"
-                    : deliveryStatus === "register"
-                    ? "Register your account"
-                    : "Access your professional account"}
+                    : activeRole === "delivery"
+                    ? deliveryStatus === "register"
+                      ? "Register your account"
+                      : "Access your professional account"
+                    : activeRole === "dhobi"
+                    ? vendorStatus === "register"
+                      ? "Register your vendor account"
+                      : "Login to vendor portal"
+                    : "Secure access for admin"}
                 </p>
               </div>
             </div>
@@ -165,13 +215,23 @@ const AuthComponent = () => {
               />
             )}
 
-            {(activeRole === "delivery" || activeRole === "dhobi") && (
+            {activeRole === "delivery" && (
               <DeliveryAuth
-                role={activeRole === "dhobi" ? "dhobi" : "deliveryboy"}
                 deliveryForm={deliveryForm}
                 setDeliveryForm={setDeliveryForm}
                 deliveryStatus={deliveryStatus}
                 setDeliveryStatus={setDeliveryStatus}
+                API_BASE_URL={API_BASE_URL}
+                navigate={navigate}
+              />
+            )}
+
+            {activeRole === "dhobi" && (
+              <VendorAuth
+                vendorForm={vendorForm}
+                setVendorForm={setVendorForm}
+                vendorStatus={vendorStatus}
+                setVendorStatus={setVendorStatus}
                 API_BASE_URL={API_BASE_URL}
                 navigate={navigate}
               />
