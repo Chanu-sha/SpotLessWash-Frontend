@@ -1,11 +1,8 @@
-// src/firebase.js
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup,
-  // RecaptchaVerifier, 
-  // signInWithPhoneNumber 
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -25,6 +22,3 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export { signInWithPopup };
-
-// 🔒 Phone auth (optional):
-// export { RecaptchaVerifier, signInWithPhoneNumber };
