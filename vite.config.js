@@ -22,12 +22,12 @@ export default defineConfig({
         short_name: "Spotless",
         description: "Spotless is a modern Laundry booking and management app.",
         start_url: "/",
-        display: "standalone",
-        display_override: ["standalone", "fullscreen"],
+        display: "fullscreen", 
+        display_override: ["fullscreen", "standalone"],
         orientation: "portrait",
-        background_color: "#ffffff",
+        background_color: "#000000", 
         theme_color: "#000000",
-        launch_handler: { client_mode: "auto" },
+        
         icons: [
           { src: "logo192.png", sizes: "192x192", type: "image/png" },
           { src: "logo512.png", sizes: "512x512", type: "image/png" },

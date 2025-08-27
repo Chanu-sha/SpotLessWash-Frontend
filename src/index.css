@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+/* Browser elements hide karo */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* PWA specific styles */
+.app-container {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: #ffffff;
+}
+
+/* Status bar area */
+.status-bar-overlay {
+  height: env(safe-area-inset-top, 24px);
+  background: #000000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
+/* Hide web browser elements */
+@media (display-mode: standalone) {
+  .web-only {
+    display: none !important;
+  }
+
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Fullscreen mode */
+@media (display-mode: fullscreen) {
+  .app-container {
+    height: 100vh;
+  }
+}
