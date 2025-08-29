@@ -13,7 +13,6 @@ const VendorAuth = ({
 }) => {
   const isRegistering = vendorStatus === "register";
 
-
   // Predefined service categories
   const availableServices = [
     "Shirts",
@@ -31,7 +30,7 @@ const VendorAuth = ({
     if (exists) {
       updatedServices = updatedServices.filter((s) => s.name !== service);
     } else {
-      updatedServices.push({ name: service, description: "", price: 0 });
+      updatedServices.push({ name: service, description: "", price: "" });
     }
     setVendorForm({ ...vendorForm, services: updatedServices });
   };
@@ -42,7 +41,7 @@ const VendorAuth = ({
       s.name === serviceName
         ? {
             ...s,
-            [field]: field === "price" ? Number(value) : value,
+            [field]: field === "price" ? value : value,
           }
         : s
     );
@@ -110,6 +109,7 @@ const VendorAuth = ({
             icon={<FiPhone />}
             placeholder="Phone Number"
             value={vendorForm.phone}
+            type="tel"
             onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
           />
           <Input
@@ -192,6 +192,7 @@ const VendorAuth = ({
           <Input
             icon={<FiPhone />}
             placeholder="Phone Number"
+            type="tel"
             value={vendorForm.phone}
             onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
           />

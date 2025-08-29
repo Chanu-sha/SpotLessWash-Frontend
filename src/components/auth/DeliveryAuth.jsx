@@ -85,6 +85,7 @@ const DeliveryAuth = ({
           <Input
             icon={<FiPhone />}
             placeholder="Phone Number"
+            type="tel"
             value={deliveryForm.phone}
             onChange={(val) => setDeliveryForm({ ...deliveryForm, phone: val })}
           />
@@ -120,6 +121,7 @@ const DeliveryAuth = ({
           <Input
             icon={<FiPhone />}
             placeholder="Phone Number"
+            type="tel"
             value={deliveryForm.phone}
             onChange={(val) => setDeliveryForm({ ...deliveryForm, phone: val })}
           />

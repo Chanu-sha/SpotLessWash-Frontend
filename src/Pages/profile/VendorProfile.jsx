@@ -712,18 +712,20 @@ export default function VendorProfile() {
 
               <div className="grid grid-cols-3 gap-3">
                 {profile.storeImages?.map((img, index) => (
-                  <div key={index} className="relative group">
+                  <div key={index} className="relative">
                     <img
                       src={img}
                       alt="Store"
                       className="w-full h-24 object-cover rounded-lg border"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 flex justify-center items-center gap-2 transition">
+
+                    {/* Bottom-right edit & delete buttons */}
+                    <div className="absolute bottom-1 right-1 flex gap-2">
                       <label
                         htmlFor={`store-image-${index}`}
-                        className="cursor-pointer"
+                        className="cursor-pointer bg-white p-1.5 rounded-full shadow-md"
                       >
-                        <FiEdit2 className="text-white" />
+                        <FiEdit2 className="text-blue-600 w-4 h-4" />
                       </label>
                       <input
                         id={`store-image-${index}`}
@@ -732,8 +734,11 @@ export default function VendorProfile() {
                         className="hidden"
                         onChange={(e) => handleStoreImageUpdate(e, index)}
                       />
-                      <button onClick={() => handleStoreImageDelete(index)}>
-                        <FiTrash2 className="text-red-500 bg-white rounded-full p-1" />
+                      <button
+                        onClick={() => handleStoreImageDelete(index)}
+                        className="bg-white p-1.5 rounded-full shadow-md"
+                      >
+                        <FiTrash2 className="text-red-600 w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -741,7 +746,7 @@ export default function VendorProfile() {
 
                 {profile.storeImages?.length < 3 && (
                   <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500">
-                    <FiPlus className="text-gray-500" />
+                    <FiPlus className="text-gray-500 w-6 h-6" />
                     <input
                       type="file"
                       accept="image/*"

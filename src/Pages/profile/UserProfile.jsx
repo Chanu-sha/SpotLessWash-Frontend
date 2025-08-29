@@ -20,6 +20,7 @@ export default function UserProfile() {
     address: "",
     photo: "",
   });
+  const { updateRole } = useContext(UserContext);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -32,6 +33,7 @@ export default function UserProfile() {
           const data = res.data?.user ?? res.data;
           setProfile(data);
           setForm((prev) => ({ ...prev, ...data }));
+          updateRole();
         } catch (err) {
           console.error("Failed to load Firebase user profile", err);
         }
@@ -49,8 +51,6 @@ export default function UserProfile() {
 
     return () => unsubscribe();
   }, []);
-
-  const { updateRole } = useContext(UserContext);
 
   const getToken = async () => {
     const current = auth.currentUser;
@@ -307,10 +307,10 @@ export default function UserProfile() {
           {!profile.isDemo && (
             <div className="border-t border-gray-200 pt-4 space-y-3">
               <button
-                onClick={() => navigate("/subscription")}
+                onClick={() => navigate("/service")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-green-400 to-emerald-600 hover:from-emerald-500 hover:to-green-400 transition shadow-md"
               >
-                📦 Manage Subscription
+                📦 Explore Our Services
               </button>
               <button
                 onClick={() => navigate("/contact")}
