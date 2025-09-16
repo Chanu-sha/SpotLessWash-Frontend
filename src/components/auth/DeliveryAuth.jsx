@@ -101,13 +101,13 @@ const DeliveryAuth = ({
 
           <button
             onClick={handleRegister}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg"
+            className="w-full bg-gradient-to-r from-orange-400 to-orange-600 text-white py-3 rounded-lg"
           >
             Register as Delivery Partner
           </button>
 
           <p className="text-center text-sm mt-4">
-            Already registered?{" "}
+            Already registered?
             <button
               onClick={() => setDeliveryStatus("login")}
               className="text-blue-600"
@@ -137,7 +137,7 @@ const DeliveryAuth = ({
 
           <button
             onClick={handleLogin}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg"
+            className="w-full bg-gradient-to-r from-orange-400 to-orange-600 text-white py-3 rounded-lg"
           >
             Sign In
           </button>

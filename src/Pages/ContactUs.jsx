@@ -90,61 +90,6 @@ export default function ContactUs() {
               </form>
             </div>
           </div>
-
-          {/* Location Info */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-green-500">
-            <div className="p-6 md:p-8">
-              <div className="flex items-center mb-6">
-                <div className="bg-green-100 p-3 rounded-full mr-4">
-                  <FaMapMarkerAlt className="h-6 w-6 text-green-600" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-800">
-                  Our Location
-                </h2>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex items-start">
-                  <div className="bg-emerald-100 p-2 rounded-lg mr-4">
-                    <FaMapMarkerAlt className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800 mb-1">
-                      Address
-                    </h3>
-                    <p className="text-gray-600">
-                      123 Main Street, Bhubaneswar, Odisha, India
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="bg-green-100 p-2 rounded-lg mr-4">
-                    <FaPhone className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800 mb-1">Phone</h3>
-                    <p className="text-gray-600">+91 9876543210</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Available 9AM - 7PM, Monday to Saturday
-                    </p>
-                  </div>
-                </div>
-
-                {/*  Map Embed  */}
-                <div className="mt-6 rounded-lg overflow-hidden border border-gray-200 h-48">
-                  <iframe
-                    title="Map"
-                    className="w-full h-full"
-                    src="https://www.openstreetmap.org/export/embed.html?bbox=85.0,20.0,86.0,21.0&layer=mapnik"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                  ></iframe>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Additional Info */}

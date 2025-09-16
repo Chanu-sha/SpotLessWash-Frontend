@@ -2,12 +2,16 @@ import {
   PiCoatHangerLight,
   PiTruckLight,
   PiCalendarDuotone,
+  PiUserLight,
+  PiVanLight,
+  PiStorefrontLight,
 } from "react-icons/pi";
 import { SlLocationPin } from "react-icons/sl";
-import pressImg1 from "../assets/HeroImage.jpeg";
-import pressImg2 from "../assets/HeroImage2.jpeg"; 
-import pressImg3 from "../assets/HeroImage3.webp";
-import pressImg4 from "../assets/HeroImage4.jpg";
+import { IoClose } from "react-icons/io5";
+import pressImg1 from "../assets/HeroImage1.png";
+import pressImg2 from "../assets/HeroImage2.png"; 
+import pressImg3 from "../assets/HeroImage3.png";
+import pressImg4 from "../assets/HeroImage4.png";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
@@ -16,13 +20,22 @@ import { UserContext } from "../context/UserContext";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { role } = useContext(UserContext);
-  const areas = ["Bhubaneswar", "Cuttack", "Puri"];
-  const stars = Array(5).fill(0);
+  const { role, currentUser, loading } = useContext(UserContext);
+  const [showRolePopup, setShowRolePopup] = useState(false);
+  const areas = ["Bhubaneswar", "Cuttack"];
 
   // Carousel images array
   const images = [pressImg1, pressImg2, pressImg3, pressImg4];
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Check if user is logged in and show popup accordingly
+  useEffect(() => {
+    if (!loading && !currentUser && !role) {
+      setShowRolePopup(true);
+    } else {
+      setShowRolePopup(false);
+    }
+  }, [currentUser, role, loading]);
 
   // Auto-slide logic
   useEffect(() => {
@@ -50,82 +63,257 @@ export default function Home() {
     }
   };
 
+  const handleRoleSelection = (selectedRole) => {
+    setShowRolePopup(false);
+    // Navigate to auth page with role parameter
+    navigate(`/auth?role=${selectedRole}`);
+  };
+
+  const roleOptions = [
+    {
+      id: "customer",
+      title: "Customer",
+      description: "Book laundry services",
+      icon: PiUserLight,
+      color: "bg-blue-100 border-blue-200 hover:bg-blue-100",
+      iconColor: "text-blue-600"
+    },
+    {
+      id: "delivery",
+      title: "Delivery Partner",
+      description: "Deliver laundry orders",
+      icon: PiVanLight,
+      color: "bg-green-100 border-green-200 hover:bg-green-100",
+      iconColor: "text-green-600"
+    },
+    {
+      id: "vendor",
+      title: "Vendor",
+      description: "Manage laundry business",
+      icon: PiStorefrontLight,
+      color: "bg-purple-100 border-purple-200 hover:bg-purple-100",
+      iconColor: "text-purple-600"
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Header />
-      <div className="min-h-screen mb-10 flex flex-col gap-6 px-4 py-4 mx-auto max-w-md">
+      
+      {/* Role Selection Popup */}
+      {showRolePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Blurred Background Overlay */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+          
+          {/* Popup Content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl mx-4 w-full max-w-md p-6 transform transition-all duration-300 scale-100">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowRolePopup(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <IoClose className="w-5 h-5 text-gray-500" />
+            </button>
+
+            {/* Header */}
+            <div className="text-center mb-6 mt-2">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Continue Your Work As
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Choose your role to get started
+              </p>
+            </div>
+
+            {/* Role Options */}
+            <div className="space-y-4">
+              {roleOptions.map((option) => {
+                const IconComponent = option.icon;
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => handleRoleSelection(option.id)}
+                    className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${option.color} hover:shadow-md transform hover:scale-[1.02]`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`p-3 rounded-full bg-white shadow-sm`}>
+                        <IconComponent className={`w-6 h-6 ${option.iconColor}`} />
+                      </div>
+                      <div className="text-left flex-1">
+                        <h3 className="font-semibold text-gray-800 text-lg">
+                          {option.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm">
+                          {option.description}
+                        </p>
+                      </div>
+                      <div className="text-gray-400">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <p className="text-center text-xs text-gray-500">
+                New to our platform? Choose your role and create an account
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className={`min-h-screen mb-10 flex flex-col gap-6 px-4 py-4 mx-auto max-w-md ${showRolePopup ? 'blur-sm pointer-events-none' : ''}`}>
         
-        {/* Hero Carousel */}
-        <div className="relative w-full h-56 overflow-hidden rounded">
-          <div
-            className="flex transition-transform duration-700 ease-in-out"
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-          >
-            {images.map((img, idx) => (
-              <img
+        {/* Hero Carousel - Fixed cropping issue */}
+        <div className="relative w-full overflow-hidden">
+          {/* Carousel container with proper aspect ratio */}
+          <div className="relative w-full" style={{ paddingTop: '60%' }}>
+            <div
+              className="absolute inset-0 flex transition-transform duration-700 ease-in-out"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
+              {images.map((img, idx) => (
+                <div key={idx} className="w-full h-full flex-shrink-0 relative">
+                  <img
+                    src={img}
+                    alt={`Slide ${idx + 1}`}
+                    className="absolute inset-0 w-full h-full object-contain p-2"
+                    style={{ 
+                      objectFit: 'contain',
+                      objectPosition: 'center'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Carousel Indicators */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+            {images.map((_, idx) => (
+              <button
                 key={idx}
-                src={img}
-                alt={`Slide ${idx + 1}`}
-                className="w-full h-56 object-cover flex-shrink-0"
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  idx === currentIndex ? 'bg-white w-6' : 'bg-white/50'
+                }`}
+                onClick={() => setCurrentIndex(idx)}
               />
             ))}
           </div>
+          
+          {/* Optional: Navigation arrows */}
+          <button
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full p-2 transition-all duration-200"
+            onClick={() => setCurrentIndex(currentIndex === 0 ? images.length - 1 : currentIndex - 1)}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full p-2 transition-all duration-200"
+            onClick={() => setCurrentIndex(currentIndex === images.length - 1 ? 0 : currentIndex + 1)}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
 
         {/* Dynamic Button */}
-        <button
-          onClick={handleButtonClick}
-          className="bg-green-600 text-white rounded px-5 py-2 self-center"
-        >
-          {getButtonText()}
-        </button>
+        {(currentUser || role) && (
+          <button
+            onClick={handleButtonClick}
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl px-6 py-3 self-center font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+          >
+            {getButtonText()}
+          </button>
+        )}
 
         {/* How It Works */}
-        <section>
-          <h2 className="text-base text-gray-400 font-semibold mb-4">
+        <section className="bg-gray-50 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-800 mb-6">
             How It Works
           </h2>
-          <ul className="flex flex-col text-gray-700">
-            <li className="flex m-0 items-center gap-2">
-              <PiCalendarDuotone className="text-green-600" />
-              Schedule a Pickup
-            </li>
-            <span className="ml-1.5 text-gray-500">|</span>
-            <li className="flex m-0 items-center gap-2">
-              <PiCoatHangerLight className="text-green-600" />
-              We wash & Iron Your Clothes
-            </li>
-            <span className="ml-1.5 text-gray-500">|</span>
-            <li className="flex m-0 items-center gap-2">
-              <PiTruckLight className="text-green-600" />
-              Get Your Clothes Back
-            </li>
-          </ul>
+          <div className="relative">
+            {/* Progress Line */}
+            <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gradient-to-b from-green-400 via-blue-400 to-purple-400"></div>
+            
+            <div className="space-y-8">
+              <div className="flex items-center gap-4 relative">
+                <div className="p-3 bg-green-100 rounded-full relative z-10 border-4 border-white shadow-sm">
+                  <PiCalendarDuotone className="text-green-600 w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Schedule a Pickup</h3>
+                  <p className="text-gray-600 text-sm">Choose your convenient time</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 relative">
+                <div className="p-3 bg-blue-100 rounded-full relative z-10 border-4 border-white shadow-sm">
+                  <PiCoatHangerLight className="text-blue-600 w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">We Wash & Iron</h3>
+                  <p className="text-gray-600 text-sm">Professional care for your clothes</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 relative">
+                <div className="p-3 bg-purple-100 rounded-full relative z-10 border-4 border-white shadow-sm">
+                  <PiTruckLight className="text-purple-600 w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Get Your Clothes Back</h3>
+                  <p className="text-gray-600 text-sm">Fresh and clean delivery</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Serviceable Areas */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-400 mb-4">
+        <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">
             Serviceable Areas
           </h2>
           <div className="flex flex-wrap gap-3">
             {areas.map((city) => (
               <div
                 key={city}
-                className="border flex gap-1 justify-center items-center px-3 py-2 rounded text-gray-700 text-sm"
+                className="border-2 border-gray-200 flex gap-2 justify-center items-center px-4 py-2 rounded-xl text-gray-700 text-sm hover:border-green-300 hover:bg-green-50 transition-colors"
               >
-                <SlLocationPin />
+                <SlLocationPin className="text-green-600" />
                 {city}
               </div>
             ))}
           </div>
         </section>
 
-        <p className="text-center text-gray-500 text-xs mt-4">
-          Proudly made in Odisha ❤️
-        </p>
-        <Footer />
+        {/* Footer Message */}
+        <div className="text-center py-4">
+          <p className="text-gray-500 text-sm">
+            Proudly made in Odisha ❤️
+          </p>
+        </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

@@ -42,8 +42,8 @@ export default function TermsAndConditions() {
               </div>
               <p className="text-gray-600">
                 Our laundry services are available only in select areas
-                including Bhubaneswar, Cuttack, and Puri. Schedule pickups via
-                our app or website.
+                including Bhubaneswar, Cuttack. Schedule pickups via
+                our app.
               </p>
             </div>
           </div>

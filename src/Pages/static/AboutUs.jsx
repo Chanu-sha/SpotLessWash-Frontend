@@ -1,16 +1,15 @@
 import {
   FaHandsHelping,
   FaTruck,
-  FaTshirt,
-  FaSuitcase,
-  FaFemale,
   FaStar,
+  FaUsers,
+  FaShieldAlt,
+  FaClock,
 } from "react-icons/fa";
 import { PiUsersThreeLight } from "react-icons/pi";
-import { GiClothes } from "react-icons/gi";
+import { MdVerified, MdSupport } from "react-icons/md";
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
-
 
 export default function AboutUs() {
   return (
@@ -24,12 +23,12 @@ export default function AboutUs() {
               About <span className="italic">Spot Less Wash</span>
             </h1>
             <p className="text-emerald-100 mt-2">
-              Fast and affordable doorstep laundry services in Bhubaneswar and Cuttack
+              Odisha's trusted laundry platform connecting you with verified professionals
             </p>
           </div>
           <div className="p-6 text-center">
             <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
-              Proudly serving Odisha ❤️
+              Proudly serving Bhubaneswar & Cuttack ❤️
             </span>
           </div>
         </div>
@@ -39,21 +38,22 @@ export default function AboutUs() {
           <div className="p-6">
             <div className="flex items-center mb-4">
               <div className="bg-green-100 p-3 rounded-full mr-4">
-                <GiClothes className="h-6 w-6 text-green-600" />
+                <FaUsers className="h-6 w-6 text-green-600" />
               </div>
               <h2 className="text-xl font-bold text-gray-800">What We Do</h2>
             </div>
+            <p className="text-gray-600 mb-3">
+              Spot Less Wash is Odisha's leading laundry platform that connects busy families with verified laundry professionals in their neighborhood. We make quality laundry services accessible, affordable, and convenient.
+            </p>
             <p className="text-gray-600">
-              Spot Less Wash is your one-stop solution for all laundry needs. Just book
-              a pickup, and we take care of the rest – from collecting your
-              clothes to washing, ironing, and delivering them back to your door.
+              Just like E-commerce platform connects you with Buisnesses, we connect you with trusted laundry experts who pick up, clean, and deliver your clothes with care.
             </p>
           </div>
         </div>
 
-        {/* ---------------- PROCESS FLOW ---------------- */}
+        {/* ---------------- HOW IT WORKS ---------------- */}
         <h2 className="text-xl font-bold text-center text-gray-800 mt-2">
-          Our Simple Process
+          How Our Platform Works
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -64,9 +64,9 @@ export default function AboutUs() {
                 <FaHandsHelping className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Book a Pickup</h3>
+                <h3 className="font-semibold text-gray-800">Book Through App</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Use the app to schedule a pickup at your convenience.
+                  Choose your preferred laundry partner and schedule pickup instantly.
                 </p>
               </div>
             </div>
@@ -79,9 +79,9 @@ export default function AboutUs() {
                 <FaTruck className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Clothes Collected</h3>
+                <h3 className="font-semibold text-gray-800">Smart Pickup</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Our delivery partner picks up your laundry on time.
+                  Our delivery partners collect clothes and connect you with verified vendors.
                 </p>
               </div>
             </div>
@@ -91,12 +91,12 @@ export default function AboutUs() {
           <div className="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-cyan-400 hover:shadow-lg transition-shadow">
             <div className="p-5 flex items-start">
               <div className="bg-cyan-100 p-3 rounded-full mr-4">
-                <FaTshirt className="h-6 w-6 text-cyan-600" />
+                <MdVerified className="h-6 w-6 text-cyan-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Washed & Pressed</h3>
+                <h3 className="font-semibold text-gray-800">Expert Cleaning</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  We wash and press your clothes with utmost care.
+                  Trusted laundry professionals clean your clothes with premium care.
                 </p>
               </div>
             </div>
@@ -109,37 +109,11 @@ export default function AboutUs() {
                 <FaTruck className="h-6 w-6 text-indigo-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Doorstep Delivery</h3>
+                <h3 className="font-semibold text-gray-800">Doorstep Return</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Your fresh clothes are delivered right back to you.
+                  Fresh, clean clothes delivered back to your doorstep on time.
                 </p>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ---------------- SERVICE AREAS ---------------- */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-purple-500">
-          <div className="p-6">
-            <div className="flex items-center mb-4">
-              <div className="bg-purple-100 p-3 rounded-full mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-gray-800">Where We Serve</h2>
-            </div>
-            <p className="text-gray-600 mb-3">
-              Spot Less Wash is currently available in:
-            </p>
-            <div className="flex gap-3">
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
-                Bhubaneswar
-              </span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
-                Cuttack
-              </span>
             </div>
           </div>
         </div>
@@ -154,83 +128,37 @@ export default function AboutUs() {
               <h2 className="text-xl font-bold text-gray-800">Our Mission</h2>
             </div>
             <p className="text-gray-600">
-              We want to make laundry stress-free, hygienic, and time-saving for
-              every household. With Spot Less Wash, laundry is just a tap away.
+              To revolutionize laundry services in Odisha by creating a trusted platform that empowers local laundry businesses while providing families with convenient, quality cleaning services at their fingertips.
             </p>
           </div>
         </div>
 
-        {/* ---------------- SERVICES SECTION ---------------- */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mt-4">
-          <div className="bg-gradient-to-r from-emerald-600 to-green-500 p-6 text-center">
-            <h2 className="text-2xl font-bold text-white">
-              Services We Offer
-            </h2>
-            <p className="text-emerald-100 mt-2">
-              We care for your clothes like our own
+        {/* ---------------- SERVICE AREAS ---------------- */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-purple-500">
+          <div className="p-6">
+            <div className="flex items-center mb-4">
+              <div className="bg-purple-100 p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800">Where We Operate</h2>
+            </div>
+            <p className="text-gray-600 mb-3">
+              Our platform is currently connecting customers with laundry partners in:
             </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
-            {/* Service 1 */}
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-400">
-              <div className="flex items-start gap-3">
-                <GiClothes className="text-green-600 text-2xl mt-1" />
-                <div>
-                  <h3 className="font-semibold text-gray-800">
-                    Complete Garment Care
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    From daily wear to designer outfits, we wash & press all with expert care.
-                  </p>
-                </div>
-              </div>
+            <div className="flex gap-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
+                Bhubaneswar
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
+                Cuttack
+              </span>
             </div>
-
-            {/* Service 2 */}
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-pink-400">
-              <div className="flex items-start gap-3">
-                <FaFemale className="text-pink-600 text-2xl mt-1" />
-                <div>
-                  <h3 className="font-semibold text-gray-800">
-                    Saree & Delicate Dry Cleaning
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Kimti silk sarees, bridal wear & delicate fabrics handled with premium solutions.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Service 3 */}
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-400">
-              <div className="flex items-start gap-3">
-                <FaTshirt className="text-blue-600 text-2xl mt-1" />
-                <div>
-                  <h3 className="font-semibold text-gray-800">
-                    Shirts, T-Shirts, Pants, Coats
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Get your formal & casual wear perfectly washed, pressed & ready to wear.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Service 4 */}
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-purple-400">
-              <div className="flex items-start gap-3">
-                <FaSuitcase className="text-purple-600 text-2xl mt-1" />
-                <div>
-                  <h3 className="font-semibold text-gray-800">
-                    Office & Party Wear Cleaning
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Whether it's a meeting or a marriage – we'll make sure your outfit looks flawless.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <p className="text-gray-500 text-sm mt-3">
+              Expanding to more cities across Odisha soon!
+            </p>
           </div>
         </div>
 
@@ -241,50 +169,68 @@ export default function AboutUs() {
               <div className="bg-amber-100 p-3 rounded-full mr-4">
                 <FaStar className="h-6 w-6 text-amber-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Why Choose Spot Less Wash?</h2>
+              <h2 className="text-xl font-bold text-gray-800">Why Choose Our Platform?</h2>
             </div>
             <ul className="space-y-3">
               <li className="flex items-start">
                 <span className="flex-shrink-0 bg-green-100 p-1 rounded-full mr-3">
-                  <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <MdVerified className="h-4 w-4 text-green-600" />
                 </span>
-                <span className="text-gray-600">Advanced stain-removal & hygiene treatment</span>
+                <span className="text-gray-600">Only verified & trusted laundry professionals</span>
               </li>
               <li className="flex items-start">
                 <span className="flex-shrink-0 bg-green-100 p-1 rounded-full mr-3">
-                  <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <FaShieldAlt className="h-4 w-4 text-green-600" />
                 </span>
-                <span className="text-gray-600">Steam ironing for wrinkle-free clothes</span>
+                <span className="text-gray-600">100% quality assurance & damage protection</span>
               </li>
               <li className="flex items-start">
                 <span className="flex-shrink-0 bg-green-100 p-1 rounded-full mr-3">
-                  <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <FaClock className="h-4 w-4 text-green-600" />
                 </span>
-                <span className="text-gray-600">Eco-friendly detergents safe for skin</span>
+                <span className="text-gray-600">Real-time tracking & guaranteed timely delivery</span>
               </li>
               <li className="flex items-start">
                 <span className="flex-shrink-0 bg-green-100 p-1 rounded-full mr-3">
-                  <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <MdSupport className="h-4 w-4 text-green-600" />
                 </span>
-                <span className="text-gray-600">On-time pickup & doorstep delivery</span>
+                <span className="text-gray-600">24/7 customer support in local language</span>
               </li>
               <li className="flex items-start">
                 <span className="flex-shrink-0 bg-green-100 p-1 rounded-full mr-3">
-                  <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <FaUsers className="h-4 w-4 text-green-600" />
                 </span>
-                <span className="text-gray-600">Odisha's trusted laundry service</span>
+                <span className="text-gray-600">Supporting local businesses & creating jobs</span>
               </li>
             </ul>
+          </div>
+        </div>
+
+        {/* ---------------- PLATFORM STATS ---------------- */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-emerald-600 to-green-500 p-6 text-center">
+            <h2 className="text-2xl font-bold text-white">
+              Our Growing Community
+            </h2>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 p-6">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">5000+</div>
+              <div className="text-sm text-gray-600">Happy Families</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">50+</div>
+              <div className="text-sm text-gray-600">Partner Vendors</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">2</div>
+              <div className="text-sm text-gray-600">Cities Covered</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">100+</div>
+              <div className="text-sm text-gray-600">Delivery Partners</div>
+            </div>
           </div>
         </div>
 
@@ -296,15 +242,16 @@ export default function AboutUs() {
             ))}
           </div>
           <blockquote className="text-gray-600 italic text-lg">
-            "Kapde bilkul naye jaise lagte hain – aur delivery bhi time pe!"
+            "Platform bahut reliable hai - har bar same quality aur time pe delivery!"
           </blockquote>
-          <p className="text-gray-500 mt-2">– A Happy Customer</p>
+          <p className="text-gray-500 mt-2">– Priya, Bhubaneswar</p>
           <div className="mt-4 flex justify-center">
             <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm font-medium">
-              Trusted by 5000+ Odisha Families
+              Rated 4.8/5 by 5000+ Users
             </span>
           </div>
         </div>
+
 
         <Footer />
       </div>

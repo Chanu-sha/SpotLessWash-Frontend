@@ -16,6 +16,7 @@ import UserProfile from "../Pages/profile/UserProfile";
 import DeliveryProfile from "../Pages/profile/DeliveryProfile";
 import VendorProfile from "../Pages/profile/VendorProfile";
 import VendorDashboard from "../Pages/vendor/VendorDashboard";
+import OurServices from "../Pages/static/OurServices";
 
 function AppRoutes() {
   return (
@@ -26,6 +27,7 @@ function AppRoutes() {
       <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
       <Route path="/vendor-dashboard" element={<VendorDashboard />} />
       <Route path="/service" element={<VendorServices />} />
+      <Route path="/ourservices" element={<OurServices />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/contact" element={<ContactUs />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />

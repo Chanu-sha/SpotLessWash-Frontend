@@ -18,7 +18,7 @@ const AdminAuth = ({ adminCreds, setAdminCreds, API_BASE_URL, navigate }) => {
     <div className="space-y-4">
       <Input icon={<FiUser />} placeholder="Admin Username" value={adminCreds.username} onChange={(val) => setAdminCreds({ ...adminCreds, username: val })} />
       <Input icon={<FiLock />} placeholder="Password" type="password" value={adminCreds.password} onChange={(val) => setAdminCreds({ ...adminCreds, password: val })} />
-      <button onClick={handleAdminLogin} className="w-full bg-blue-600 text-white py-3 rounded-lg">Access Admin Panel</button>
+      <button onClick={handleAdminLogin} className="w-full bg-gradient-to-r from-red-600 to-sky-600 text-white py-3 rounded-lg">Access Admin Panel</button>
     </div>
   );
 };

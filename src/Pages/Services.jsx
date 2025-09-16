@@ -11,7 +11,7 @@ const ImageCarousel = ({ images, vendorName }) => {
 
   if (!images || images.length === 0) {
     return (
-      <div className="h-40 bg-gradient-to-r from-blue-50 to-orange-50 flex items-center justify-center">
+      <div className="h-40 bg-gradient-to-r from-blue-200 to-orange-200 flex items-center justify-center">
         <div className="text-4xl">🧺</div>
       </div>
     );
@@ -38,22 +38,22 @@ const ImageCarousel = ({ images, vendorName }) => {
         className="w-full h-full object-cover transition-opacity duration-300"
       />
 
-      {/* Navigation Arrows (only show if more than 1 image) */}
+      {/* Navigation Arrows - Always visible if more than 1 image */}
       {images.length > 1 && (
         <>
           <button
             onClick={prevImage}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-70"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-opacity-80 hover:scale-110 z-10"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button
             onClick={nextImage}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-70"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-opacity-80 hover:scale-110 z-10"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -106,7 +106,7 @@ const Services = () => {
 
   // fetch vendors + check logged in user
   useEffect(() => {
-    const fetchApprovedDhobis = async () => {
+    const fetchApprovedVendors = async () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/vendor/approved`
@@ -114,13 +114,13 @@ const Services = () => {
         setVendors(response.data || []);
         setLoading(false);
       } catch (err) {
-        setError("Failed to fetch approved dhobis");
+        setError("Failed to fetch approved vendors");
         setLoading(false);
-        console.error("Error fetching dhobis:", err);
+        console.error("Error fetching vendors:", err);
       }
     };
 
-    fetchApprovedDhobis();
+    fetchApprovedVendors();
 
     try {
       const auth = getAuth();
@@ -308,24 +308,24 @@ const Services = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {vendors.map((dhobi) => {
-              const showAll = expandedVendors[dhobi._id] || false;
+            {vendors.map((vendor) => {
+              const showAll = expandedVendors[vendor._id] || false;
 
               return (
                 <div
-                  key={dhobi._id}
+                  key={vendor._id}
                   className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-200"
                 >
                   {/* Updated Image Carousel */}
                   <ImageCarousel 
-                    images={dhobi.storeImages} 
-                    vendorName={dhobi.name} 
+                    images={vendor.storeImages} 
+                    vendorName={vendor.name} 
                   />
 
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-3">
                       <h2 className="text-lg font-bold text-gray-800 truncate">
-                        {dhobi.name}
+                        {vendor.name}
                       </h2>
                       <div className="flex items-center bg-green-50 px-2 py-1 rounded">
                         <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
@@ -335,7 +335,7 @@ const Services = () => {
                       </div>
                     </div>
 
-                    {dhobi.address && (
+                    {vendor.address && (
                       <div className="flex items-center text-gray-600 text-sm mb-3">
                         <svg
                           className="w-4 h-4 mr-1 flex-shrink-0"
@@ -356,20 +356,20 @@ const Services = () => {
                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                           />
                         </svg>
-                        <span className="truncate">{dhobi.address}</span>
+                        <span className="truncate">{vendor.address}</span>
                       </div>
                     )}
 
                     {/* Services */}
-                    {dhobi.services && dhobi.services.length > 0 ? (
+                    {vendor.services && vendor.services.length > 0 ? (
                       <div>
                         <h3 className="text-sm font-semibold text-gray-700 mb-2 border-b pb-1">
                           Services
                         </h3>
                         <div className="space-y-2">
                           {(showAll
-                            ? dhobi.services
-                            : dhobi.services.slice(0, 3)
+                            ? vendor.services
+                            : vendor.services.slice(0, 3)
                           ).map((service, index) => (
                             <div
                               key={index}
@@ -391,17 +391,17 @@ const Services = () => {
                             </div>
                           ))}
 
-                          {dhobi.services.length > 3 && !showAll && (
+                          {vendor.services.length > 3 && !showAll && (
                             <button
                               className="text-xs text-blue-500 font-medium"
                               onClick={() =>
                                 setExpandedVendors((prev) => ({
                                   ...prev,
-                                  [dhobi._id]: true,
+                                  [vendor._id]: true,
                                 }))
                               }
                             >
-                              +{dhobi.services.length - 3} more services
+                              +{vendor.services.length - 3} more services
                             </button>
                           )}
                         </div>
@@ -416,7 +416,7 @@ const Services = () => {
 
                     <button
                       onClick={() => {
-                        setSelectedVendor(dhobi);
+                        setSelectedVendor(vendor);
                         setShowVendorModal(true);
                       }}
                       className="w-full mt-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 transition-colors"

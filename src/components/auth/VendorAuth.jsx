@@ -172,13 +172,13 @@ const VendorAuth = ({
 
           <button
             onClick={handleRegister}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg"
+            className="w-full bg-gradient-to-r from-purple-400 to-purple-600 text-white py-3 rounded-lg"
           >
             Register as Vendor
           </button>
 
           <p className="text-center text-sm mt-4">
-            Already registered?{" "}
+            Already registered?
             <button
               onClick={() => setVendorStatus("login")}
               className="text-blue-600"
@@ -205,7 +205,7 @@ const VendorAuth = ({
           />
           <button
             onClick={handleLogin}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg"
+            className="w-full bg-gradient-to-r from-purple-400 to-purple-600 text-white py-3 rounded-lg"
           >
             Sign In
           </button>
