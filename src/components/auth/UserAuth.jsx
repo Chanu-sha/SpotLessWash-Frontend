@@ -147,17 +147,9 @@ const UserAuth = ({ sendTokenToBackend }) => {
   const handleNativeGoogleSignIn = async () => {
     setLoading(true);
     try {
-      // Configure Firebase Authentication Plugin
-      await FirebaseAuthentication.configure({
-        skipNativeAuth: false,
-        providers: ["google.com"],
-        serverClientId: "231824837114-80sd16itpbi8bu729q2e5kk8sd03d8k6.apps.googleusercontent.com",
-      });
-
-      // Start Google Sign-In Flow
-      const result = await FirebaseAuthentication.signInWithGoogle({
-        serverClientId: "231824837114-80sd16itpbi8bu729q2e5kk8sd03d8k6.apps.googleusercontent.com",
-      });
+      // No need to configure - it's done via capacitor.config.json
+      // Start Google Sign-In Flow directly
+      const result = await FirebaseAuthentication.signInWithGoogle();
 
       if (!result.credential?.idToken) {
         throw new Error("No ID token returned from Google.");
