@@ -1,16 +1,42 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { FiMail, FiLock, FiUser } from "react-icons/fi";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithCredential,
   sendPasswordResetEmail,
   sendEmailVerification,
-  signOut
+  signOut,
+  GoogleAuthProvider,
+  updateProfile,
 } from "firebase/auth";
-import { auth, googleProvider } from "../../firebase";
+import { auth } from "../../firebase";
 import { toast } from "react-toastify";
 import { UserContext } from "../../context/UserContext";
+
+// ✅ Safe Capacitor Import with Error Handling
+let Capacitor = null;
+let FirebaseAuthentication = null;
+
+try {
+  // Only import if available (native app)
+  const capacitorCore = require("@capacitor/core");
+  Capacitor = capacitorCore.Capacitor;
+  
+  const firebaseAuth = require("@capacitor-firebase/authentication");
+  FirebaseAuthentication = firebaseAuth.FirebaseAuthentication;
+} catch (error) {
+  console.log("Capacitor plugins not available - running in web mode");
+}
+
+// ✅ Google Provider for Web
+const webGoogleProvider = new GoogleAuthProvider();
+webGoogleProvider.addScope("profile");
+webGoogleProvider.addScope("email");
+webGoogleProvider.setCustomParameters({
+  prompt: "select_account",
+});
 
 const UserAuth = ({ sendTokenToBackend }) => {
   const { updateRole } = useContext(UserContext);
@@ -18,323 +44,402 @@ const UserAuth = ({ sendTokenToBackend }) => {
   const [loading, setLoading] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [isNative, setIsNative] = useState(false);
 
-  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
 
-  //  Handle Sign In with Email Verification Check
+  useEffect(() => {
+    // ✅ Safe Check for Native Platform
+    const checkPlatform = () => {
+      try {
+        setIsNative(Capacitor && Capacitor.isNativePlatform());
+      } catch (error) {
+        setIsNative(false);
+      }
+    };
+    
+    checkPlatform();
+
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user && user.emailVerified) {
+        // Already signed in & verified
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // ========= Email/Password Sign In =========
   const handleSignIn = async () => {
     if (!email || !password) {
-      toast.error("Enter email & password");
+      toast.error("Please enter both email and password.");
       return;
     }
     setLoading(true);
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Check if email is verified
+
       if (!result.user.emailVerified) {
-        // Sign out the user immediately
         await signOut(auth);
-        toast.error("Please verify your email before signing in!");
+        toast.error(
+          "Your email is not verified. Please check your inbox or resend verification."
+        );
         setShowVerificationMessage(true);
         setVerificationEmail(email);
         return;
       }
-      
+
       await sendTokenToBackend(result.user);
       updateRole();
-      toast.success("Welcome back 🎉");
+      toast.success("Welcome back! 🎉");
     } catch (error) {
+      console.error("Sign In Error:", error);
       if (error.code === "auth/user-not-found") {
-        toast.error("No account found. Please sign up!");
+        toast.error("No account found with this email. Please sign up!");
       } else if (error.code === "auth/wrong-password") {
-        toast.error("Incorrect password.");
+        toast.error("Incorrect password. Please try again.");
       } else if (error.code === "auth/too-many-requests") {
-        toast.error("Too many failed attempts. Try again later.");
+        toast.error(
+          "Access to this account has been temporarily disabled due to many failed login attempts. Try again later or reset password."
+        );
+      } else if (error.code === "auth/invalid-credential") {
+        toast.error("Invalid credentials. Please check your email and password.");
       } else {
-        toast.error(error.message);
+        toast.error(error.message || "Sign in failed. Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  //  Handle Sign Up with Email Verification
+  // ========= Email/Password Sign Up =========
   const handleSignUp = async () => {
     if (!email || !password || !fullName) {
-      toast.error("Fill all fields");
+      toast.error("Please fill in all fields: Full Name, Email, and Password.");
       return;
     }
-    
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error("Password must be at least 6 characters long.");
       return;
     }
-    
     setLoading(true);
     try {
-      const newUser = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Send email verification
-      await sendEmailVerification(newUser.user);
-      
-      // Sign out the user immediately after signup
+      const newUserCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await updateProfile(newUserCredential.user, { displayName: fullName });
+
+      await sendEmailVerification(newUserCredential.user);
       await signOut(auth);
-      
-      toast.success("Account created! Please check your email for verification.");
+
+      toast.success("Account created! Please check your email for a verification link.");
       setShowVerificationMessage(true);
       setVerificationEmail(email);
       setIsRegistering(false);
-      
-      // Clear form
+
       setEmail("");
       setPassword("");
       setFullName("");
-      
     } catch (error) {
+      console.error("Sign Up Error:", error);
       if (error.code === "auth/email-already-in-use") {
-        toast.error("Email already registered. Try signing in!");
+        toast.error("This email address is already registered. Please try signing in!");
       } else if (error.code === "auth/weak-password") {
-        toast.error("Password is too weak!");
+        toast.error("The password is too weak. Please choose a stronger password.");
       } else if (error.code === "auth/invalid-email") {
-        toast.error("Invalid email address!");
+        toast.error("The email address is not valid. Please enter a valid email.");
       } else {
-        toast.error(error.message);
+        toast.error(error.message || "Sign up failed. Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  //  Resend Verification Email
+  // ========= Resend Verification Email =========
   const handleResendVerification = async () => {
     if (!verificationEmail) {
-      toast.error("No email found to resend verification");
+      toast.error("No email found to resend verification.");
       return;
     }
-    
     setLoading(true);
     try {
-      // Create a temporary user to send verification
-      const tempUser = await signInWithEmailAndPassword(auth, verificationEmail, password);
-      await sendEmailVerification(tempUser.user);
-      await signOut(auth); // Sign out immediately
-      toast.success("Verification email resent! Check your inbox.");
+      toast.info(
+        "Please sign in again. If your email is unverified, you'll be prompted to resend verification email."
+      );
     } catch (error) {
-      toast.error("Failed to resend verification email. Try signing up again.");
+      console.error("Resend Verification Error:", error);
+      toast.error("Failed to resend verification email. Please try signing in again.");
     } finally {
       setLoading(false);
     }
   };
 
-  //  Google SignIn (Google accounts are automatically verified)
+  // ========= Google Sign In (Universal - Handles Both Native and Web) =========
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await sendTokenToBackend(result.user);
-      updateRole();
-      toast.success("Signed in with Google 🎉");
+      if (isNative && FirebaseAuthentication) {
+        await nativeGoogleSignIn();
+      } else {
+        // Web Google Sign-In
+        const result = await signInWithPopup(auth, webGoogleProvider);
+        if (!result.user) throw new Error("Google Sign-In did not return a user.");
+
+        await sendTokenToBackend(result.user);
+        updateRole();
+        toast.success("Signed in with Google! 🎉");
+      }
     } catch (error) {
-      toast.error(`Google login failed: ${error.message}`);
+      console.error("Google Sign-In Error:", error);
+      if (error.code === "auth/popup-closed-by-user") {
+        toast.info("Google Sign-In cancelled.");
+      } else if (error.code === "auth/account-exists-with-different-credential") {
+        toast.error(
+          "An account already exists with this email but different provider. Use the correct provider."
+        );
+      } else {
+        toast.error(`Google Sign-In failed: ${error.message || "Try again."}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  //  Forgot Password
-  const handleForgotPassword = async () => {
-    if (!email) {
-      toast.error("Enter your email first!");
-      return;
-    }
+  // ========= Native Google Sign In (Only for Native Apps) =========
+  const nativeGoogleSignIn = async () => {
     try {
-      await sendPasswordResetEmail(auth, email);
-      toast.success("Password reset email sent!");
+      await FirebaseAuthentication.configure({
+        skipNativeAuth: false,
+        providers: ["google.com"],
+        serverClientId:
+          "231824837114-80sd16itpbi8bu729q2e5kk8sd03d8k6.apps.googleusercontent.com",
+      });
+
+      const result = await FirebaseAuthentication.signInWithGoogle({
+        serverClientId:
+          "231824837114-80sd16itpbi8bu729q2e5kk8sd03d8k6.apps.googleusercontent.com",
+      });
+
+      if (!result.credential?.idToken)
+        throw new Error("No ID token returned from Google.");
+
+      const googleCredential = GoogleAuthProvider.credential(result.credential.idToken);
+      const firebaseUserCredential = await signInWithCredential(auth, googleCredential);
+
+      if (!firebaseUserCredential.user)
+        throw new Error("Firebase sign-in with Google credential failed.");
+
+      await sendTokenToBackend(firebaseUserCredential.user);
+      updateRole();
+      toast.success("Signed in with Google (Native)! 🎉");
     } catch (error) {
-      if (error.code === "auth/user-not-found") {
-        toast.error("No account found with this email!");
+      console.error("Native Google Sign-In Error:", error);
+      if (error.code === "USER_CANCELLED") {
+        toast.info("Google Sign-In cancelled.");
+      } else if (
+        error.code === "DEVELOPER_ERROR" ||
+        error.message?.includes("10:") ||
+        error.message?.toLowerCase().includes("developer_error")
+      ) {
+        toast.error(
+          "Google Sign-In configuration error. Check SHA-1 fingerprint & Web Client ID."
+        );
+      } else if (error.message?.includes("12501")) {
+        toast.info("Google Sign-In cancelled by user.");
       } else {
-        toast.error(error.message);
+        toast.error(
+          `Native Google login failed: ${error.message || "An unknown error occurred."}`
+        );
       }
     }
   };
 
-  // Hide verification message and go back to normal auth
+  // ========= Forgot Password =========
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Please enter your email address to reset password.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Password reset email sent! Check inbox/spam folder.");
+    } catch (error) {
+      console.error("Forgot Password Error:", error);
+      if (error.code === "auth/user-not-found") {
+        toast.error("No account found with this email address.");
+      } else if (error.code === "auth/invalid-email") {
+        toast.error("The email address is not valid.");
+      } else {
+        toast.error(error.message || "Failed to send password reset email.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========= Handle Back to Auth Screen =========
   const handleBackToAuth = () => {
     setShowVerificationMessage(false);
     setVerificationEmail("");
   };
 
-  // Email Verification Message Screen
+  // ========= UI Rendering Logic =========
   if (showVerificationMessage) {
     return (
-      <div className="space-y-4 text-center">
+      <div className="space-y-4 text-center p-4">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="text-yellow-800">
             <h3 className="font-semibold mb-2">Check Your Email!</h3>
             <p className="text-sm mb-3">
-              We've sent a verification link to <strong>{verificationEmail}</strong>
+              We've sent a verification link to <strong>{verificationEmail}</strong>.
             </p>
             <p className="text-sm mb-3">
-              Please click the verification link in your email, then come back and sign in.
+              Please click the link in your email to verify your account. Then, you can sign in.
             </p>
           </div>
         </div>
-        
+
         <div className="space-y-3">
           <button
             onClick={handleResendVerification}
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg disabled:opacity-50"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
           >
             {loading ? "Sending..." : "Resend Verification Email"}
           </button>
-          
+
           <button
             onClick={handleBackToAuth}
-            className="w-full border border-gray-300 py-3 rounded-lg text-gray-700"
+            className="w-full border border-gray-300 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
             Back to Sign In
           </button>
         </div>
-        
+
         <p className="text-xs text-gray-500">
-          Don't see the email? Check your spam folder or try resending.
+          Didn't receive the email? Check spam/junk folder or try resending.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/*  Sign In Form */}
-      {!isRegistering && (
-        <>
-          <div className="relative">
-            <FiMail className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="email"
-              placeholder="Email address"
-              className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="relative">
-            <FiLock className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="password"
-              placeholder="Password"
-              className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:border-blue-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={handleSignIn}
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
-          >
-            {loading ? "Please wait..." : "Sign In"}
-          </button>
-        </>
-      )}
+    <div className="space-y-4 p-4">
+      <h2 className="text-2xl font-semibold text-center mb-6">
+        {isRegistering ? "Create Your Account" : "Sign In to Your Account"}
+      </h2>
 
-      {/*  Sign Up Form */}
+      {/* Debug Info - Remove in Production */}
+      <div className="text-xs text-gray-400 text-center">
+        Running in: {isNative ? "Native App" : "Web Browser"} Mode
+      </div>
+
       {isRegistering && (
-        <>
-          <div className="relative">
-            <FiUser className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Full Name"
-              className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:border-green-500"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          </div>
-          <div className="relative">
-            <FiMail className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="email"
-              placeholder="Email address"
-              className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:border-green-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="relative">
-            <FiLock className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="password"
-              placeholder="Password (min 6 characters)"
-              className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:border-green-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={handleSignUp}
-            disabled={loading}
-            className="w-full bg-green-600 text-white py-3 rounded-lg disabled:opacity-50 hover:bg-green-700 transition-colors"
-          >
-            {loading ? "Creating Account..." : "Sign Up"}
-          </button>
-          
-          <p className="text-xs text-gray-500 text-center">
-            By signing up, you'll receive a verification email that must be confirmed before you can sign in.
-          </p>
-        </>
+        <div className="relative">
+          <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Full Name"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
+        </div>
       )}
 
-      {/* Toggle */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-center">
-          {isRegistering
-            ? "Already have an account?"
-            : "Don't have an account?"}
+      <div className="relative">
+        <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        <input
+          type="email"
+          placeholder="Email address"
+          autoComplete="email"
+          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+
+      <div className="relative">
+        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        <input
+          type="password"
+          placeholder={isRegistering ? "Password (min 6 characters)" : "Password"}
+          autoComplete={isRegistering ? "new-password" : "current-password"}
+          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </div>
+
+      {isRegistering ? (
+        <button
+          onClick={handleSignUp}
+          disabled={loading}
+          className="w-full bg-green-600 text-white py-3 rounded-lg disabled:opacity-50 hover:bg-green-700 transition-colors font-medium"
+        >
+          {loading ? "Creating Account..." : "Sign Up"}
+        </button>
+      ) : (
+        <button
+          onClick={handleSignIn}
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-3 rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors font-medium"
+        >
+          {loading ? "Signing In..." : "Sign In"}
+        </button>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-center justify-between text-sm mt-4">
+        <p className="mb-2 sm:mb-0">
+          {isRegistering ? "Already have an account?" : "Don't have an account?"}
           <button
             onClick={() => setIsRegistering(!isRegistering)}
-            className="ml-2 text-blue-600 font-medium hover:underline"
+            className="ml-1 text-blue-600 font-medium hover:underline"
           >
             {isRegistering ? "Sign In" : "Sign Up"}
           </button>
         </p>
         {!isRegistering && (
-          <div className="text-right">
-            <button
-              onClick={handleForgotPassword}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              Forgot Password?
-            </button>
-          </div>
+          <button
+            onClick={handleForgotPassword}
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Forgot Password?
+          </button>
         )}
       </div>
 
-      {/* OR divider */}
-      <div className="my-4 flex items-center">
+      <div className="my-6 flex items-center">
         <hr className="flex-grow border-gray-300" />
-        <span className="mx-2 text-gray-500">or</span>
+        <span className="mx-4 text-gray-500 font-medium">OR</span>
         <hr className="flex-grow border-gray-300" />
       </div>
 
-      {/* Google */}
       <button
         onClick={handleGoogleSignIn}
         disabled={loading}
-        className="w-full border py-3 rounded-lg flex justify-center items-center disabled:opacity-50 hover:bg-gray-50 transition-colors"
+        className="w-full border border-gray-300 py-3 rounded-lg flex justify-center items-center disabled:opacity-50 hover:bg-gray-50 transition-colors text-gray-700 font-medium"
       >
-        <img
-          src="https://www.svgrepo.com/show/475656/google-color.svg"
-          alt="Google"
-          className="w-5 h-5 mr-2"
-        />
-        {loading ? "Please wait..." : "Continue with Google"}
+        {loading ? (
+          <>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+            <span>{isNative ? "Processing Native Google Sign-In..." : "Please wait..."}</span>
+          </>
+        ) : (
+          <>
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google icon"
+              className="w-5 h-5 mr-3"
+            />
+            Continue with Google {isNative ? "(Native)" : "(Web)"}
+          </>
+        )}
       </button>
     </div>
   );
