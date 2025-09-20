@@ -1,7 +1,8 @@
-import { useContext } from "react";
-import { FiUser, FiMail, FiPhone, FiLock } from "react-icons/fi";
+import React, { useContext, useState } from "react";
+import { FiUser, FiMail, FiPhone, FiLock, FiCamera, FiUpload, FiX } from "react-icons/fi";
 import { toast } from "react-toastify";
 import { UserContext } from "../../context/UserContext";
+import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera';
 
 const VendorAuth = ({
   vendorForm,
@@ -12,15 +13,84 @@ const VendorAuth = ({
   navigate,
 }) => {
   const isRegistering = vendorStatus === "register";
+  const [isCapturing, setIsCapturing] = useState(false);
 
   // Predefined service categories
   const availableServices = [
     "Shirts",
-    "Pants",
+    "Pants", 
     "Ethnic Wear",
     "Home Linen",
     "Shoes",
   ];
+
+  // Capacitor Camera function
+  const capturePhoto = async (photoType) => {
+    try {
+      setIsCapturing(true);
+
+      const image = await Camera.getPhoto({
+        quality: 85,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
+        direction: photoType === 'live' ? CameraDirection.Front : CameraDirection.Rear,
+        width: 1024,
+        height: 768,
+        saveToGallery: false,
+        correctOrientation: true
+      });
+
+      // Convert base64 to File object
+      const base64Data = image.dataUrl;
+      const response = await fetch(base64Data);
+      const blob = await response.blob();
+      const file = new File([blob], `${photoType}_photo.jpg`, { 
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
+
+      setVendorForm(prev => ({
+        ...prev,
+        [`${photoType}Photo`]: file,
+        [`${photoType}PhotoPreview`]: base64Data
+      }));
+
+      const photoName = photoType === 'live' ? 'Live Photo' : 'Aadhaar Card';
+      toast.success(`${photoName} captured successfully!`);
+
+    } catch (error) {
+      console.error('Camera error:', error);
+      if (error.message === 'User cancelled photos app') {
+        toast.info('Photo capture cancelled');
+      } else {
+        toast.error('Camera not available. Please check permissions.');
+      }
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
+  // Get image preview
+  const getImagePreview = (photoType) => {
+    const preview = vendorForm[`${photoType}PhotoPreview`];
+    if (preview) {
+      return preview;
+    }
+    return null;
+  };
+
+  // Remove photo
+  const removePhoto = (photoType) => {
+    setVendorForm(prev => ({
+      ...prev,
+      [`${photoType}Photo`]: null,
+      [`${photoType}PhotoPreview`]: null
+    }));
+    
+    const photoName = photoType === 'live' ? 'Live Photo' : 'Aadhaar Card';
+    toast.info(`${photoName} removed`);
+  };
 
   // Toggle service
   const toggleService = (service) => {
@@ -50,29 +120,104 @@ const VendorAuth = ({
 
   const { updateRole } = useContext(UserContext);
 
+  // Validate form data
+  const validateForm = () => {
+    if (!vendorForm.name?.trim()) {
+      toast.error("Please enter your full name");
+      return false;
+    }
+    if (!vendorForm.email?.trim() || !vendorForm.email.includes('@')) {
+      toast.error("Please enter a valid email");
+      return false;
+    }
+    if (!vendorForm.phone?.trim() || vendorForm.phone.length < 10) {
+      toast.error("Please enter a valid phone number");
+      return false;
+    }
+    if (!vendorForm.password || vendorForm.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return false;
+    }
+    if (!vendorForm.services || vendorForm.services.length === 0) {
+      toast.error("Please select at least one service");
+      return false;
+    }
+    if (!vendorForm.livePhoto) {
+      toast.error("Please capture your live photo");
+      return false;
+    }
+    if (!vendorForm.aadhaarPhoto) {
+      toast.error("Please capture Aadhaar card photo");
+      return false;
+    }
+    return true;
+  };
+
   const handleRegister = async () => {
+    if (!validateForm()) return;
+
     try {
+      const formData = new FormData();
+      formData.append('name', vendorForm.name.trim());
+      formData.append('email', vendorForm.email.trim().toLowerCase());
+      formData.append('phone', vendorForm.phone.trim());
+      formData.append('password', vendorForm.password);
+      formData.append('services', JSON.stringify(vendorForm.services));
+      formData.append('livePhoto', vendorForm.livePhoto);
+      formData.append('aadhaarPhoto', vendorForm.aadhaarPhoto);
+
       const res = await fetch(`${API_BASE_URL}/vendor/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(vendorForm),
+        body: formData,
       });
+
       const data = await res.json();
-      res.ok
-        ? (toast.success(data.message), setVendorStatus("pending"))
-        : toast.error(data.message);
+      if (res.ok) {
+        toast.success(data.message);
+        setVendorStatus("pending");
+        // Clear form after successful registration
+        setVendorForm({
+          name: '',
+          email: '',
+          phone: '',
+          password: '',
+          services: [],
+          livePhoto: null,
+          aadhaarPhoto: null,
+          livePhotoPreview: null,
+          aadhaarPhotoPreview: null
+        });
+      } else {
+        toast.error(data.message || "Registration failed");
+      }
     } catch (err) {
-      toast.error("Network error");
+      console.error("Register error:", err);
+      toast.error("Network error. Please check your internet connection.");
     }
   };
 
   const handleLogin = async () => {
+    const { phone, password } = vendorForm;
+
+    if (!phone?.trim()) {
+      toast.error("Please enter phone number");
+      return;
+    }
+    if (!password) {
+      toast.error("Please enter password");
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/vendor/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(vendorForm),
+        body: JSON.stringify({ 
+          phone: phone.trim(), 
+          password 
+        }),
       });
+
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem("vendorToken", data.token);
@@ -80,167 +225,328 @@ const VendorAuth = ({
         toast.success("Login successful");
         navigate("/vendorprofile");
       } else {
-        toast.error(data.message);
-        if (data.message.includes("Not approved")) setVendorStatus("pending");
+        toast.error(data.message || "Login failed");
+        if (data.message?.includes("Not approved")) {
+          setVendorStatus("pending");
+        }
       }
     } catch (err) {
-      toast.error("Network error");
+      console.error("Login Request Error:", err);
+      toast.error("Network error. Please check your internet connection.");
     }
   };
 
   return (
-    <>
-      {isRegistering ? (
-        <div className="space-y-4">
-          <Input
-            icon={<FiUser />}
-            placeholder="Full Name"
-            value={vendorForm.name}
-            onChange={(val) => setVendorForm({ ...vendorForm, name: val })}
-          />
-          <Input
-            icon={<FiMail />}
-            placeholder="Email"
-            value={vendorForm.email}
-            type="email"
-            onChange={(val) => setVendorForm({ ...vendorForm, email: val })}
-          />
-          <Input
-            icon={<FiPhone />}
-            placeholder="Phone Number"
-            value={vendorForm.phone}
-            type="tel"
-            onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
-          />
-          <Input
-            icon={<FiLock />}
-            placeholder="Password"
-            type="password"
-            value={vendorForm.password}
-            onChange={(val) => setVendorForm({ ...vendorForm, password: val })}
-          />
+    <div className="min-h-screen ">
+      <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+          <h2 className="text-2xl font-bold text-white">
+            {isRegistering ? 'Register as Vendor' : 'Vendor Login'}
+          </h2>
+        </div>
 
-          {/* Services Section */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Select Services You Provide</h3>
-            {availableServices.map((service, idx) => {
-              const selected = (vendorForm.services || []).find(
-                (s) => s.name === service
-              );
-              return (
-                <div key={idx} className="mb-4">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={!!selected}
-                      onChange={() => toggleService(service)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded"
-                    />
-                    <span className="font-medium">{service}</span>
-                  </label>
+        <div className="p-6">
+          {isRegistering ? (
+            <div className="space-y-6">
+              {/* Basic Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+                  Personal Information
+                </h3>
+                
+                <Input
+                  icon={<FiUser />}
+                  placeholder="Full Name"
+                  value={vendorForm.name || ''}
+                  onChange={(val) => setVendorForm({ ...vendorForm, name: val })}
+                  required
+                />
+                
+                <Input
+                  icon={<FiMail />}
+                  placeholder="Email Address"
+                  type="email"
+                  value={vendorForm.email || ''}
+                  onChange={(val) => setVendorForm({ ...vendorForm, email: val })}
+                  required
+                />
+                
+                <Input
+                  icon={<FiPhone />}
+                  placeholder="Phone Number"
+                  type="tel"
+                  value={vendorForm.phone || ''}
+                  onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
+                  required
+                />
+                
+                <Input
+                  icon={<FiLock />}
+                  placeholder="Create Password"
+                  type="password"
+                  value={vendorForm.password || ''}
+                  onChange={(val) => setVendorForm({ ...vendorForm, password: val })}
+                  required
+                />
+              </div>
 
-                  {selected && (
-                    <div className="ml-6 mt-2 space-y-2">
-                      <input
-                        type="text"
-                        placeholder="Service Description"
-                        value={selected.description}
-                        onChange={(e) =>
-                          updateServiceField(
-                            service,
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Price (₹)"
-                        value={selected.price}
-                        onChange={(e) =>
-                          updateServiceField(service, "price", e.target.value)
-                        }
-                        className="w-full p-2 border rounded"
-                      />
-                    </div>
-                  )}
+              {/* Services Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+                  Services You Provide
+                </h3>
+                
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50">
+                  {availableServices.map((service, idx) => {
+                    const selected = (vendorForm.services || []).find(
+                      (s) => s.name === service
+                    );
+                    return (
+                      <div key={idx} className="mb-4">
+                        <label className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={!!selected}
+                            onChange={() => toggleService(service)}
+                            className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                          />
+                          <span className="font-medium text-gray-800">{service}</span>
+                        </label>
+
+                        {selected && (
+                          <div className="ml-8 mt-3 space-y-3 p-3 bg-white rounded-lg border">
+                            <input
+                              type="text"
+                              placeholder="Service Description"
+                              value={selected.description}
+                              onChange={(e) =>
+                                updateServiceField(
+                                  service,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            />
+                            <input
+                              type="number"
+                              placeholder="Price (₹)"
+                              value={selected.price}
+                              onChange={(e) =>
+                                updateServiceField(service, "price", e.target.value)
+                              }
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              </div>
 
-          <button
-            onClick={handleRegister}
-            className="w-full bg-gradient-to-r from-purple-400 to-purple-600 text-white py-3 rounded-lg"
-          >
-            Register as Vendor
-          </button>
+              {/* Documents Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+                  Required Documents
+                </h3>
 
-          <p className="text-center text-sm mt-4">
-            Already registered?
-            <button
-              onClick={() => setVendorStatus("login")}
-              className="text-blue-600"
-            >
-              Login here
-            </button>
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <Input
-            icon={<FiPhone />}
-            placeholder="Phone Number"
-            type="tel"
-            value={vendorForm.phone}
-            onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
-          />
-          <Input
-            icon={<FiLock />}
-            placeholder="Password"
-            type="password"
-            value={vendorForm.password}
-            onChange={(val) => setVendorForm({ ...vendorForm, password: val })}
-          />
-          <button
-            onClick={handleLogin}
-            className="w-full bg-gradient-to-r from-purple-400 to-purple-600 text-white py-3 rounded-lg"
-          >
-            Sign In
-          </button>
-          <p className="text-center text-sm mt-4">
-            Don’t have an account?{" "}
-            <button
-              onClick={() => setVendorStatus("register")}
-              className="text-blue-600"
-            >
-              Register here
-            </button>
-          </p>
-        </div>
-      )}
+                {/* Live Photo */}
+                <PhotoSection
+                  title="Live Photo"
+                  subtitle="Take a clear selfie"
+                  photoType="live"
+                  icon={<FiCamera className="text-blue-500" />}
+                  vendorForm={vendorForm}
+                  capturePhoto={capturePhoto}
+                  getImagePreview={getImagePreview}
+                  removePhoto={removePhoto}
+                  isCapturing={isCapturing}
+                />
 
-      {vendorStatus === "pending" && (
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm text-center">
-          Your registration is pending approval. We’ll notify you once your
-          account is activated.
+                {/* Aadhaar Card */}
+                <PhotoSection
+                  title="Aadhaar Card"
+                  subtitle="Capture clear photo of your Aadhaar card"
+                  photoType="aadhaar"
+                  icon={<FiUpload className="text-green-500" />}
+                  vendorForm={vendorForm}
+                  capturePhoto={capturePhoto}
+                  getImagePreview={getImagePreview}
+                  removePhoto={removePhoto}
+                  isCapturing={isCapturing}
+                />
+              </div>
+
+              {/* Register Button */}
+              <button
+                onClick={handleRegister}
+                disabled={!vendorForm.livePhoto || !vendorForm.aadhaarPhoto || !vendorForm.services?.length}
+                className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-200 ${
+                  vendorForm.livePhoto && vendorForm.aadhaarPhoto && vendorForm.services?.length
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {vendorForm.livePhoto && vendorForm.aadhaarPhoto && vendorForm.services?.length
+                  ? 'Complete Registration'
+                  : 'Please complete all requirements'
+                }
+              </button>
+
+              {/* Switch to Login */}
+              <div className="text-center pt-4 border-t">
+                <p className="text-gray-600">
+                  Already registered?{" "}
+                  <button
+                    onClick={() => setVendorStatus("login")}
+                    className="text-purple-600 font-semibold hover:text-purple-700"
+                  >
+                    Login here
+                  </button>
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* Login Form */
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <Input
+                  icon={<FiPhone />}
+                  placeholder="Phone Number"
+                  type="tel"
+                  value={vendorForm.phone || ''}
+                  onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
+                  required
+                />
+                
+                <Input
+                  icon={<FiLock />}
+                  placeholder="Password"
+                  type="password"
+                  value={vendorForm.password || ''}
+                  onChange={(val) => setVendorForm({ ...vendorForm, password: val })}
+                  required
+                />
+              </div>
+
+              <button
+                onClick={handleLogin}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                Sign In
+              </button>
+
+              <div className="text-center pt-4 border-t">
+                <p className="text-gray-600">
+                  Don't have an account?{" "}
+                  <button
+                    onClick={() => setVendorStatus("register")}
+                    className="text-purple-600 font-semibold hover:text-purple-700"
+                  >
+                    Register here
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Pending Status */}
+          {vendorStatus === "pending" && (
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center justify-center mb-2">
+                <div className="text-2xl">⏳</div>
+              </div>
+              <p className="text-yellow-800 text-center font-medium">
+                Registration Pending
+              </p>
+              <p className="text-yellow-700 text-sm text-center mt-1">
+                Your documents are being verified. We'll notify you once approved.
+              </p>
+            </div>
+          )}
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 };
 
-const Input = ({ icon, placeholder, value, onChange, type = "text" }) => (
+// Photo Section Component
+const PhotoSection = ({ 
+  title, 
+  subtitle,
+  photoType, 
+  icon, 
+  cameraIcon,
+  vendorForm, 
+  capturePhoto, 
+  getImagePreview, 
+  removePhoto,
+  isCapturing 
+}) => (
+  <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50">
+    <div className="flex items-center mb-3">
+      {icon}
+      <div className="ml-3">
+        <h4 className="font-semibold text-gray-800">{title}</h4>
+        <p className="text-sm text-gray-600">{subtitle}</p>
+      </div>
+    </div>
+    
+    {vendorForm[`${photoType}Photo`] ? (
+      <div className="relative inline-block">
+        <img
+          src={getImagePreview(photoType)}
+          alt={`${photoType} photo`}
+          className="w-full max-w-xs h-48 object-cover rounded-lg border-2 border-purple-200 shadow-md"
+        />
+        <button
+          onClick={() => removePhoto(photoType)}
+          className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg"
+        >
+          <FiX size={16} />
+        </button>
+        <div className="mt-2 text-center">
+          <span className="text-green-600 font-medium text-sm">✓ Photo Captured</span>
+        </div>
+      </div>
+    ) : (
+      <button
+        onClick={() => capturePhoto(photoType)}
+        disabled={isCapturing}
+        className={`w-full border-2 border-dashed border-purple-300 rounded-lg p-6 text-purple-600 hover:border-purple-400 hover:bg-purple-50 transition-all duration-200 ${
+          isCapturing ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
+      >
+        <div className="text-4xl mb-2">{cameraIcon}</div>
+        <FiCamera className="mx-auto mb-2" size={32} />
+        <p className="font-semibold">
+          {isCapturing ? 'Opening Camera...' : 'Tap to Capture'}
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          {photoType === 'live' ? 'Front camera will open' : 'Back camera will open'}
+        </p>
+      </button>
+    )}
+  </div>
+);
+
+// Input Component
+const Input = ({ icon, placeholder, value, onChange, type = "text", required = false }) => (
   <div className="relative">
-    <div className="absolute left-3 top-3 text-gray-400">{icon}</div>
+    <div className="absolute left-3 top-4 text-gray-400 z-10">{icon}</div>
     <input
       type={type}
       placeholder={placeholder}
-      className="w-full pl-10 pr-4 py-3 border rounded-lg"
+      className="w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white text-gray-900 transition-all duration-200"
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      required={required}
     />
+    {required && !value && (
+      <div className="absolute right-3 top-4 text-red-400">*</div>
+    )}
   </div>
 );
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FaDownload, FaEye, FaTimes } from "react-icons/fa";
 
 const AdminPanel = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -11,6 +12,7 @@ const AdminPanel = () => {
   const [users, setUsers] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [imageModal, setImageModal] = useState({ isOpen: false, src: "", title: "" });
 
   const fetchData = async (role, tab) => {
     setLoading(true);
@@ -89,6 +91,33 @@ const AdminPanel = () => {
     }
   };
 
+  const downloadImage = async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      toast.success("📥 Image downloaded successfully!");
+    } catch (error) {
+      toast.error("Failed to download image");
+      console.error('Download failed:', error);
+    }
+  };
+
+  const openImageModal = (src, title) => {
+    setImageModal({ isOpen: true, src, title });
+  };
+
+  const closeImageModal = () => {
+    setImageModal({ isOpen: false, src: "", title: "" });
+  };
+
   useEffect(() => {
     fetchData(activeRole, activeTab);
   }, [activeRole, activeTab]);
@@ -125,6 +154,43 @@ const AdminPanel = () => {
     return colors[index];
   };
 
+  const DocumentCard = ({ title, imageUrl, icon, fileName, userName }) => {
+    if (!imageUrl) return null;
+
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg">{icon}</span>
+            <h4 className="font-semibold text-gray-800">{title}</h4>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => openImageModal(imageUrl, title)}
+              className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors duration-200"
+              title="View Image"
+            >
+              <FaEye size={16} />
+            </button>
+            <button
+              onClick={() => downloadImage(imageUrl, `${userName}_${fileName}`)}
+              className="p-2 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg transition-colors duration-200"
+              title="Download Image"
+            >
+              <FaDownload size={16} />
+            </button>
+          </div>
+        </div>
+        <img
+          src={imageUrl}
+          alt={title}
+          className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={() => openImageModal(imageUrl, title)}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen max-w-md mx-auto bg-gradient-to-br from-slate-50 to-blue-50">
       <ToastContainer
@@ -139,6 +205,28 @@ const AdminPanel = () => {
         theme="colored"
         className="mt-16"
       />
+
+      {/* Image Modal */}
+      {imageModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+          <div className="relative max-w-4xl max-h-full">
+            <button
+              onClick={closeImageModal}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <FaTimes size={24} />
+            </button>
+            <img
+              src={imageModal.src}
+              alt={imageModal.title}
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4 rounded-b-lg">
+              <h3 className="text-lg font-semibold">{imageModal.title}</h3>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <header className="bg-white shadow-lg sticky top-0 z-10 border-b border-gray-200">
@@ -195,7 +283,7 @@ const AdminPanel = () => {
               key={tab.key}
               className={`px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 shadow-sm ${
                 activeTab === tab.key
-                  ? `bg-${tab.color}-600 text-gray-500 shadow-lg transform scale-105`
+                  ? `bg-${tab.color}-600 text-white shadow-lg transform scale-105`
                   : `bg-white text-gray-700 hover:bg-${tab.color}-50 hover:text-${tab.color}-600 border border-gray-200`
               }`}
               onClick={() => setActiveTab(tab.key)}
@@ -242,9 +330,9 @@ const AdminPanel = () => {
                   <div className="p-5">
                     <div className="flex items-start space-x-4">
                       {/* Profile Avatar / Photo */}
-                      {user.photo ? (
+                      {user.photo || user.livePhoto ? (
                         <img
-                          src={user.photo}
+                          src={user.photo || user.livePhoto}
                           alt={user.name}
                           className="w-14 h-14 rounded-full object-cover shadow-sm border"
                         />
@@ -355,6 +443,93 @@ const AdminPanel = () => {
                             </div>
                           )}
 
+                          {/* Document Verification Section */}
+                          <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
+                            <h3 className="font-semibold text-gray-800 flex items-center mb-4">
+                              <span className="mr-2">📄</span>
+                              Document Verification
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 gap-4">
+                              {/* For Delivery Boys */}
+                              {activeRole === "deliveryboy" && (
+                                <>
+                                  {/* Live Photo */}
+                                  <DocumentCard
+                                    title="Live Photo"
+                                    imageUrl={user.livePhoto}
+                                    icon="📸"
+                                    fileName="live_photo.jpg"
+                                    userName={user.name.replace(/\s+/g, '_')}
+                                  />
+
+                                  {/* Aadhaar Card */}
+                                  <DocumentCard
+                                    title="Aadhaar Card"
+                                    imageUrl={user.aadhaarPhoto}
+                                    icon="🆔"
+                                    fileName="aadhaar.jpg"
+                                    userName={user.name.replace(/\s+/g, '_')}
+                                  />
+
+                                  {/* Driving License */}
+                                  <DocumentCard
+                                    title="Driving License"
+                                    imageUrl={user.licensePhoto}
+                                    icon="🚗"
+                                    fileName="license.jpg"
+                                    userName={user.name.replace(/\s+/g, '_')}
+                                  />
+                                </>
+                              )}
+
+                              {/* For Vendors */}
+                              {activeRole === "vendor" && (
+                                <>
+                                  {/* Live Photo */}
+                                  <DocumentCard
+                                    title="Live Photo"
+                                    imageUrl={user.livePhoto}
+                                    icon="📸"
+                                    fileName="live_photo.jpg"
+                                    userName={user.name.replace(/\s+/g, '_')}
+                                  />
+
+                                  {/* Aadhaar Card */}
+                                  <DocumentCard
+                                    title="Aadhaar Card"
+                                    imageUrl={user.aadhaarPhoto}
+                                    icon="🆔"
+                                    fileName="aadhaar.jpg"
+                                    userName={user.name.replace(/\s+/g, '_')}
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Store Images (Only for Vendors) */}
+                          {activeRole === "vendor" && user.storeImages && user.storeImages.length > 0 && (
+                            <div className="p-4 bg-orange-50 rounded-lg">
+                              <h3 className="font-semibold text-gray-800 flex items-center mb-4">
+                                <span className="mr-2">🏪</span>
+                                Store Images ({user.storeImages.length})
+                              </h3>
+                              <div className="grid grid-cols-1 gap-4">
+                                {user.storeImages.map((imageUrl, index) => (
+                                  <DocumentCard
+                                    key={index}
+                                    title={`Store Image ${index + 1}`}
+                                    imageUrl={imageUrl}
+                                    icon="🏪"
+                                    fileName={`store_image_${index + 1}.jpg`}
+                                    userName={user.name.replace(/\s+/g, '_')}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Services (for vendors) */}
                           {activeRole === "vendor" &&
                             user.services &&
@@ -419,7 +594,7 @@ const AdminPanel = () => {
                     onClick={() => toggleExpand(user._id)}
                     className="w-full py-3 bg-gradient-to-r from-gray-50 to-blue-50 text-blue-600 font-medium hover:from-blue-50 hover:to-purple-50 transition-all duration-200 border-t border-gray-100"
                   >
-                    <div className="flex items-center text-start ml-3">
+                    <div className="flex items-center justify-center">
                       <span>
                         {isExpanded ? "👆 Show Less" : "👇 Show More Details"}
                       </span>

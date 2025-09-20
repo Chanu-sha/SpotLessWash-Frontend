@@ -209,7 +209,7 @@ const DeliveryAuth = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen  ">
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-center">
@@ -275,7 +275,6 @@ const DeliveryAuth = ({
                   subtitle="Take a clear selfie"
                   photoType="live"
                   icon={<FiCamera className="text-blue-500" />}
-                  cameraIcon="👤"
                   deliveryForm={deliveryForm}
                   capturePhoto={capturePhoto}
                   getImagePreview={getImagePreview}
@@ -289,7 +288,6 @@ const DeliveryAuth = ({
                   subtitle="Capture clear photo of your Aadhaar card"
                   photoType="aadhaar"
                   icon={<FiUpload className="text-green-500" />}
-                  cameraIcon="🆔"
                   deliveryForm={deliveryForm}
                   capturePhoto={capturePhoto}
                   getImagePreview={getImagePreview}
@@ -303,7 +301,6 @@ const DeliveryAuth = ({
                   subtitle="Capture clear photo of your license"
                   photoType="license"
                   icon={<FiUpload className="text-purple-500" />}
-                  cameraIcon="🚗"
                   deliveryForm={deliveryForm}
                   capturePhoto={capturePhoto}
                   getImagePreview={getImagePreview}
