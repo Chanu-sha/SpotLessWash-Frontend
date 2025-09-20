@@ -3,7 +3,6 @@ import { FiMail, FiLock, FiUser } from "react-icons/fi";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
   signInWithCredential,
   sendPasswordResetEmail,
   sendEmailVerification,
@@ -14,29 +13,7 @@ import {
 import { auth } from "../../firebase";
 import { toast } from "react-toastify";
 import { UserContext } from "../../context/UserContext";
-
-// ✅ Safe Capacitor Import with Error Handling
-let Capacitor = null;
-let FirebaseAuthentication = null;
-
-try {
-  // Only import if available (native app)
-  const capacitorCore = require("@capacitor/core");
-  Capacitor = capacitorCore.Capacitor;
-  
-  const firebaseAuth = require("@capacitor-firebase/authentication");
-  FirebaseAuthentication = firebaseAuth.FirebaseAuthentication;
-} catch (error) {
-  console.log("Capacitor plugins not available - running in web mode");
-}
-
-// ✅ Google Provider for Web
-const webGoogleProvider = new GoogleAuthProvider();
-webGoogleProvider.addScope("profile");
-webGoogleProvider.addScope("email");
-webGoogleProvider.setCustomParameters({
-  prompt: "select_account",
-});
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 
 const UserAuth = ({ sendTokenToBackend }) => {
   const { updateRole } = useContext(UserContext);
@@ -44,24 +21,12 @@ const UserAuth = ({ sendTokenToBackend }) => {
   const [loading, setLoading] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
-  const [isNative, setIsNative] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
 
   useEffect(() => {
-    // ✅ Safe Check for Native Platform
-    const checkPlatform = () => {
-      try {
-        setIsNative(Capacitor && Capacitor.isNativePlatform());
-      } catch (error) {
-        setIsNative(false);
-      }
-    };
-    
-    checkPlatform();
-
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user && user.emailVerified) {
         // Already signed in & verified
@@ -92,7 +57,7 @@ const UserAuth = ({ sendTokenToBackend }) => {
 
       await sendTokenToBackend(result.user);
       updateRole();
-      toast.success("Welcome back! 🎉");
+      toast.success("Welcome back!");
     } catch (error) {
       console.error("Sign In Error:", error);
       if (error.code === "auth/user-not-found") {
@@ -178,83 +143,59 @@ const UserAuth = ({ sendTokenToBackend }) => {
     }
   };
 
-  // ========= Google Sign In (Universal - Handles Both Native and Web) =========
-  const handleGoogleSignIn = async () => {
+  // ========= Native Google Sign In ONLY =========
+  const handleNativeGoogleSignIn = async () => {
     setLoading(true);
     try {
-      if (isNative && FirebaseAuthentication) {
-        await nativeGoogleSignIn();
-      } else {
-        // Web Google Sign-In
-        const result = await signInWithPopup(auth, webGoogleProvider);
-        if (!result.user) throw new Error("Google Sign-In did not return a user.");
-
-        await sendTokenToBackend(result.user);
-        updateRole();
-        toast.success("Signed in with Google! 🎉");
-      }
-    } catch (error) {
-      console.error("Google Sign-In Error:", error);
-      if (error.code === "auth/popup-closed-by-user") {
-        toast.info("Google Sign-In cancelled.");
-      } else if (error.code === "auth/account-exists-with-different-credential") {
-        toast.error(
-          "An account already exists with this email but different provider. Use the correct provider."
-        );
-      } else {
-        toast.error(`Google Sign-In failed: ${error.message || "Try again."}`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ========= Native Google Sign In (Only for Native Apps) =========
-  const nativeGoogleSignIn = async () => {
-    try {
+      // Configure Firebase Authentication Plugin
       await FirebaseAuthentication.configure({
         skipNativeAuth: false,
         providers: ["google.com"],
-        serverClientId:
-          "231824837114-80sd16itpbi8bu729q2e5kk8sd03d8k6.apps.googleusercontent.com",
+        serverClientId: "231824837114-80sd16itpbi8bu729q2e5kk8sd03d8k6.apps.googleusercontent.com",
       });
 
+      // Start Google Sign-In Flow
       const result = await FirebaseAuthentication.signInWithGoogle({
-        serverClientId:
-          "231824837114-80sd16itpbi8bu729q2e5kk8sd03d8k6.apps.googleusercontent.com",
+        serverClientId: "231824837114-80sd16itpbi8bu729q2e5kk8sd03d8k6.apps.googleusercontent.com",
       });
 
-      if (!result.credential?.idToken)
+      if (!result.credential?.idToken) {
         throw new Error("No ID token returned from Google.");
+      }
 
+      // Create Firebase credential with Google token
       const googleCredential = GoogleAuthProvider.credential(result.credential.idToken);
+      
+      // Sign in to Firebase with Google credential
       const firebaseUserCredential = await signInWithCredential(auth, googleCredential);
 
-      if (!firebaseUserCredential.user)
+      if (!firebaseUserCredential.user) {
         throw new Error("Firebase sign-in with Google credential failed.");
+      }
 
+      // Send token to backend and update role
       await sendTokenToBackend(firebaseUserCredential.user);
       updateRole();
-      toast.success("Signed in with Google (Native)! 🎉");
+      toast.success("Successfully signed in with Google!");
+
     } catch (error) {
       console.error("Native Google Sign-In Error:", error);
+      
       if (error.code === "USER_CANCELLED") {
         toast.info("Google Sign-In cancelled.");
-      } else if (
-        error.code === "DEVELOPER_ERROR" ||
-        error.message?.includes("10:") ||
-        error.message?.toLowerCase().includes("developer_error")
-      ) {
-        toast.error(
-          "Google Sign-In configuration error. Check SHA-1 fingerprint & Web Client ID."
-        );
+      } else if (error.code === "DEVELOPER_ERROR" || error.message?.includes("10:")) {
+        toast.error("Google Sign-In configuration error. Check SHA-1 fingerprint setup.");
       } else if (error.message?.includes("12501")) {
         toast.info("Google Sign-In cancelled by user.");
+      } else if (error.message?.includes("12500")) {
+        toast.error("Google Sign-In service is currently unavailable.");
+      } else if (error.message?.includes("network")) {
+        toast.error("Network error. Please check your internet connection.");
       } else {
-        toast.error(
-          `Native Google login failed: ${error.message || "An unknown error occurred."}`
-        );
+        toast.error(`Google Sign-In failed: ${error.message || "Please try again."}`);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -333,11 +274,6 @@ const UserAuth = ({ sendTokenToBackend }) => {
       <h2 className="text-2xl font-semibold text-center mb-6">
         {isRegistering ? "Create Your Account" : "Sign In to Your Account"}
       </h2>
-
-      {/* Debug Info - Remove in Production */}
-      <div className="text-xs text-gray-400 text-center">
-        Running in: {isNative ? "Native App" : "Web Browser"} Mode
-      </div>
 
       {isRegistering && (
         <div className="relative">
@@ -420,15 +356,16 @@ const UserAuth = ({ sendTokenToBackend }) => {
         <hr className="flex-grow border-gray-300" />
       </div>
 
+      {/* Native Google Sign-In Button */}
       <button
-        onClick={handleGoogleSignIn}
+        onClick={handleNativeGoogleSignIn}
         disabled={loading}
-        className="w-full border border-gray-300 py-3 rounded-lg flex justify-center items-center disabled:opacity-50 hover:bg-gray-50 transition-colors text-gray-700 font-medium"
+        className="w-full bg-white border-2 border-gray-300 py-3 rounded-lg flex justify-center items-center disabled:opacity-50 hover:bg-gray-50 transition-colors text-gray-700 font-medium shadow-sm"
       >
         {loading ? (
           <>
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
-            <span>{isNative ? "Processing Native Google Sign-In..." : "Please wait..."}</span>
+            <span>Signing in with Google...</span>
           </>
         ) : (
           <>
@@ -437,7 +374,7 @@ const UserAuth = ({ sendTokenToBackend }) => {
               alt="Google icon"
               className="w-5 h-5 mr-3"
             />
-            Continue with Google {isNative ? "(Native)" : "(Web)"}
+            Continue with Google
           </>
         )}
       </button>
