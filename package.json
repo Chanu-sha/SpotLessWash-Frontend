@@ -25,6 +25,8 @@
   },
   "dependencies": {
     "@capacitor/camera": "^7.0.2",
+    "@capacitor/filesystem": "^7.1.4",
+    "@capacitor/share": "^7.0.2",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.10.0",
     "firebase": "^11.10.0",

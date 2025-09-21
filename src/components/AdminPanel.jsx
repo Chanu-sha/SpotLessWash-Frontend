@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaDownload, FaEye, FaTimes } from "react-icons/fa";
+// Capacitor imports
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 const AdminPanel = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -91,19 +95,60 @@ const AdminPanel = () => {
     }
   };
 
+  // Fixed download function for Capacitor
   const downloadImage = async (url, filename) => {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-      toast.success("📥 Image downloaded successfully!");
+      // Check if running in Capacitor (mobile app)
+      if (Capacitor.isNativePlatform()) {
+        // Mobile app - use Capacitor Filesystem API
+        const response = await fetch(url);
+        const blob = await response.blob();
+        
+        // Convert blob to base64
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64String = reader.result.split(',')[1];
+            resolve(base64String);
+          };
+          reader.readAsDataURL(blob);
+        });
+
+        // Save file using Capacitor Filesystem
+        const result = await Filesystem.writeFile({
+          path: filename,
+          data: base64,
+          directory: Directory.Documents, // या Directory.External भी use कर सकते हैं
+        });
+
+        toast.success("📥 Image downloaded successfully!");
+        
+        // Optional: Share the downloaded file
+        try {
+          await Share.share({
+            title: 'Downloaded Image',
+            text: `Image saved: ${filename}`,
+            url: result.uri,
+            dialogTitle: 'Share Image'
+          });
+        } catch (shareError) {
+          console.log('Share not available:', shareError);
+        }
+
+      } else {
+        // Web browser - use traditional download method
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+        toast.success("📥 Image downloaded successfully!");
+      }
     } catch (error) {
       toast.error("Failed to download image");
       console.error('Download failed:', error);
