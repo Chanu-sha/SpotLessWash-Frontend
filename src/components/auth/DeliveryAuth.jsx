@@ -14,6 +14,7 @@ const DeliveryAuth = ({
 }) => {
   const isRegistering = deliveryStatus === "register";
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Capacitor Camera function
   const capturePhoto = async (photoType) => {
@@ -110,6 +111,7 @@ const DeliveryAuth = ({
   const handleRegister = async () => {
     if (!validateForm()) return;
 
+    setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append('name', deliveryForm.name.trim());
@@ -148,6 +150,8 @@ const DeliveryAuth = ({
     } catch (err) {
       console.error("Register error:", err);
       toast.error("Network error. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -166,6 +170,7 @@ const DeliveryAuth = ({
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const res = await fetch(`${API_BASE_URL}/deliveryboy/login`, {
         method: "POST",
@@ -192,6 +197,8 @@ const DeliveryAuth = ({
     } catch (err) {
       console.error("Login Request Error:", err);
       toast.error("Network error. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -233,6 +240,7 @@ const DeliveryAuth = ({
                   value={deliveryForm.name || ''}
                   onChange={(val) => setDeliveryForm({ ...deliveryForm, name: val })}
                   required
+                  disabled={isSubmitting}
                 />
                 
                 <Input
@@ -242,6 +250,7 @@ const DeliveryAuth = ({
                   value={deliveryForm.email || ''}
                   onChange={(val) => setDeliveryForm({ ...deliveryForm, email: val })}
                   required
+                  disabled={isSubmitting}
                 />
                 
                 <Input
@@ -251,6 +260,7 @@ const DeliveryAuth = ({
                   value={deliveryForm.phone || ''}
                   onChange={(val) => setDeliveryForm({ ...deliveryForm, phone: val })}
                   required
+                  disabled={isSubmitting}
                 />
                 
                 <Input
@@ -260,6 +270,7 @@ const DeliveryAuth = ({
                   value={deliveryForm.password || ''}
                   onChange={(val) => setDeliveryForm({ ...deliveryForm, password: val })}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -280,6 +291,7 @@ const DeliveryAuth = ({
                   getImagePreview={getImagePreview}
                   removePhoto={removePhoto}
                   isCapturing={isCapturing}
+                  isSubmitting={isSubmitting}
                 />
 
                 {/* Aadhaar Card */}
@@ -293,6 +305,7 @@ const DeliveryAuth = ({
                   getImagePreview={getImagePreview}
                   removePhoto={removePhoto}
                   isCapturing={isCapturing}
+                  isSubmitting={isSubmitting}
                 />
 
                 {/* Driving License */}
@@ -306,23 +319,33 @@ const DeliveryAuth = ({
                   getImagePreview={getImagePreview}
                   removePhoto={removePhoto}
                   isCapturing={isCapturing}
+                  isSubmitting={isSubmitting}
                 />
               </div>
 
               {/* Register Button */}
               <button
                 onClick={handleRegister}
-                disabled={!deliveryForm.livePhoto || !deliveryForm.aadhaarPhoto || !deliveryForm.licensePhoto}
-                className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-200 ${
-                  deliveryForm.livePhoto && deliveryForm.aadhaarPhoto && deliveryForm.licensePhoto
+                disabled={!deliveryForm.livePhoto || !deliveryForm.aadhaarPhoto || !deliveryForm.licensePhoto || isSubmitting}
+                className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-200 flex items-center justify-center ${
+                  deliveryForm.livePhoto && deliveryForm.aadhaarPhoto && deliveryForm.licensePhoto && !isSubmitting
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {deliveryForm.livePhoto && deliveryForm.aadhaarPhoto && deliveryForm.licensePhoto
-                  ? 'Complete Registration'
-                  : 'Please capture all photos'
-                }
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing Registration...
+                  </>
+                ) : (
+                  deliveryForm.livePhoto && deliveryForm.aadhaarPhoto && deliveryForm.licensePhoto
+                    ? 'Complete Registration'
+                    : 'Please capture all photos'
+                )}
               </button>
 
               {/* Switch to Login */}
@@ -331,7 +354,8 @@ const DeliveryAuth = ({
                   Already registered?{" "}
                   <button
                     onClick={() => setDeliveryStatus("login")}
-                    className="text-orange-600 font-semibold hover:text-orange-700"
+                    disabled={isSubmitting}
+                    className="text-orange-600 font-semibold hover:text-orange-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
                     Login here
                   </button>
@@ -349,6 +373,7 @@ const DeliveryAuth = ({
                   value={deliveryForm.phone || ''}
                   onChange={(val) => setDeliveryForm({ ...deliveryForm, phone: val })}
                   required
+                  disabled={isSubmitting}
                 />
                 
                 <Input
@@ -358,14 +383,26 @@ const DeliveryAuth = ({
                   value={deliveryForm.password || ''}
                   onChange={(val) => setDeliveryForm({ ...deliveryForm, password: val })}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
               <button
                 onClick={handleLogin}
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                Sign In
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing In...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
               </button>
 
               <div className="text-center pt-4 border-t">
@@ -373,7 +410,8 @@ const DeliveryAuth = ({
                   Don't have an account?{" "}
                   <button
                     onClick={() => setDeliveryStatus("register")}
-                    className="text-orange-600 font-semibold hover:text-orange-700"
+                    disabled={isSubmitting}
+                    className="text-orange-600 font-semibold hover:text-orange-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
                     Register here
                   </button>
@@ -408,12 +446,12 @@ const PhotoSection = ({
   subtitle,
   photoType, 
   icon, 
-  cameraIcon,
   deliveryForm, 
   capturePhoto, 
   getImagePreview, 
   removePhoto,
-  isCapturing 
+  isCapturing,
+  isSubmitting 
 }) => (
   <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50">
     <div className="flex items-center mb-3">
@@ -433,7 +471,8 @@ const PhotoSection = ({
         />
         <button
           onClick={() => removePhoto(photoType)}
-          className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg"
+          disabled={isSubmitting}
+          className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           <FiX size={16} />
         </button>
@@ -444,15 +483,15 @@ const PhotoSection = ({
     ) : (
       <button
         onClick={() => capturePhoto(photoType)}
-        disabled={isCapturing}
+        disabled={isCapturing || isSubmitting}
         className={`w-full border-2 border-dashed border-orange-300 rounded-lg p-6 text-orange-600 hover:border-orange-400 hover:bg-orange-50 transition-all duration-200 ${
-          isCapturing ? 'opacity-50 cursor-not-allowed' : ''
+          (isCapturing || isSubmitting) ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       >
-        <div className="text-4xl mb-2">{cameraIcon}</div>
         <FiCamera className="mx-auto mb-2" size={32} />
         <p className="font-semibold">
-          {isCapturing ? 'Opening Camera...' : 'Tap to Capture'}
+          {isCapturing ? 'Opening Camera...' : 
+           isSubmitting ? 'Processing...' : 'Tap to Capture'}
         </p>
         <p className="text-xs text-gray-500 mt-1">
           {photoType === 'live' ? 'Front camera will open' : 'Back camera will open'}
@@ -463,16 +502,19 @@ const PhotoSection = ({
 );
 
 // Input Component
-const Input = ({ icon, placeholder, value, onChange, type = "text", required = false }) => (
+const Input = ({ icon, placeholder, value, onChange, type = "text", required = false, disabled = false }) => (
   <div className="relative">
     <div className="absolute left-3 top-4 text-gray-400 z-10">{icon}</div>
     <input
       type={type}
       placeholder={placeholder}
-      className="w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 bg-white text-gray-900 transition-all duration-200"
+      className={`w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 bg-white text-gray-900 transition-all duration-200 ${
+        disabled ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''
+      }`}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       required={required}
+      disabled={disabled}
     />
     {required && !value && (
       <div className="absolute right-3 top-4 text-red-400">*</div>

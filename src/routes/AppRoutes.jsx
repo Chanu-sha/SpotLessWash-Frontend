@@ -17,6 +17,7 @@ import DeliveryProfile from "../Pages/profile/DeliveryProfile";
 import VendorProfile from "../Pages/profile/VendorProfile";
 import VendorDashboard from "../Pages/vendor/VendorDashboard";
 import OurServices from "../Pages/static/OurServices";
+import AdminWithdrawalDashboard from "../components/AdminWithdrawalDashboard";
 
 function AppRoutes() {
   return (
@@ -24,6 +25,7 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/auth" element={<AuthComponent />} />
       <Route path="/admin-panel" element={<AdminPanel />} />
+      <Route path="/admin-Withdrawl-Dashboard" element={<AdminWithdrawalDashboard />} />
       <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
       <Route path="/vendor-dashboard" element={<VendorDashboard />} />
       <Route path="/service" element={<VendorServices />} />

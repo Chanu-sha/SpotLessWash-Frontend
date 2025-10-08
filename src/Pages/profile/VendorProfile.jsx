@@ -38,7 +38,7 @@ export default function VendorProfile() {
   const [serviceForm, setServiceForm] = useState({
     name: "",
     description: "",
-    price: "",
+    basePrice: "",
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -169,7 +169,7 @@ export default function VendorProfile() {
 
   // ---- Services ----
   const handleAddService = async () => {
-    if (!serviceForm.name || !serviceForm.description || !serviceForm.price) {
+    if (!serviceForm.name || !serviceForm.description || !serviceForm.basePrice) {
       return toast.error("All service fields are required");
     }
 
@@ -186,7 +186,7 @@ export default function VendorProfile() {
       );
 
       setProfile((prev) => ({ ...prev, services: res.data.services }));
-      setServiceForm({ name: "", description: "", price: "" });
+      setServiceForm({ name: "", description: "", basePrice: "" });
       toast.success("Service added successfully!");
     } catch (err) {
       console.error(err);
@@ -195,7 +195,7 @@ export default function VendorProfile() {
   };
 
   const handleUpdateService = async (serviceId) => {
-    if (!serviceForm.name || !serviceForm.description || !serviceForm.price) {
+    if (!serviceForm.name || !serviceForm.description || !serviceForm.basePrice) {
       return toast.error("All service fields are required");
     }
 
@@ -211,7 +211,7 @@ export default function VendorProfile() {
 
       setProfile((prev) => ({ ...prev, services: res.data.services }));
       setEditingService(null);
-      setServiceForm({ name: "", description: "", price: "" });
+      setServiceForm({ name: "", description: "", basePrice: "" });
       toast.success("Service updated successfully!");
     } catch (err) {
       console.error(err);
@@ -376,7 +376,7 @@ export default function VendorProfile() {
     setServiceForm({
       name: service.name,
       description: service.description,
-      price: service.price.toString(),
+      basePrice: service.basePrice.toString(),
     });
   };
 
@@ -613,11 +613,11 @@ export default function VendorProfile() {
                       <input
                         type="number"
                         placeholder="Price (₹)"
-                        value={serviceForm.price}
+                        value={serviceForm.basePrice}
                         onChange={(e) =>
                           setServiceForm({
                             ...serviceForm,
-                            price: e.target.value,
+                            basePrice: e.target.value,
                           })
                         }
                         className="w-full text-sm p-2 border rounded focus:outline-none focus:border-blue-500"
@@ -639,7 +639,7 @@ export default function VendorProfile() {
                                 setServiceForm({
                                   name: "",
                                   description: "",
-                                  price: "",
+                                  basePrice: "",
                                 });
                               }}
                               className="text-xs px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
@@ -675,7 +675,7 @@ export default function VendorProfile() {
                               {service.description}
                             </p>
                             <p className="text-sm font-semibold text-green-600 mt-1">
-                              ₹{service.price}
+                              ₹{service.basePrice}
                             </p>
                           </div>
                           <div className="flex gap-1 ml-2">

@@ -13,7 +13,7 @@ const DeliveryDashboard = () => {
   // Confirmation popup state
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [claimType, setClaimType] = useState(""); 
+  const [claimType, setClaimType] = useState("");
 
   // Fetch unclaimed pickup orders
   const fetchAllOrders = async () => {
@@ -89,7 +89,7 @@ const DeliveryDashboard = () => {
     }
   };
 
-  // Fetch delivery orders (Washed / Ready for Delivery etc.)
+  // Fetch delivery orders
   const fetchDeliveryOrders = async () => {
     const token = localStorage.getItem("deliveryToken");
     try {
@@ -165,21 +165,11 @@ const DeliveryDashboard = () => {
 
   return (
     <div className="min-h-screen max-w-md mx-auto bg-gray-50 pb-20 p-4 md:p-6">
-      <ToastContainer
-        position="top-center"
-        autoClose={2000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
+      <ToastContainer position="top-center" autoClose={2000} theme="colored" />
 
       {/* Confirmation Popup */}
       {showConfirmPopup && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm  flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
             <div className="text-center mb-4">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
@@ -197,13 +187,13 @@ const DeliveryDashboard = () => {
             <div className="flex space-x-3">
               <button
                 onClick={handleCancelClaim}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors duration-200"
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmClaim}
-                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200"
+                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-2 px-4 rounded-lg font-medium"
               >
                 Confirm
               </button>
@@ -220,7 +210,7 @@ const DeliveryDashboard = () => {
         {/* Tabs */}
         <div className="flex mb-6 bg-white rounded-lg shadow-sm p-1">
           <button
-            className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all ${
+            className={`flex-1 py-3 px-4 rounded-md text-sm font-medium ${
               tab === "pickup"
                 ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
@@ -230,7 +220,7 @@ const DeliveryDashboard = () => {
             Pickup Orders
           </button>
           <button
-            className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all ${
+            className={`flex-1 py-3 px-4 rounded-md text-sm font-medium ${
               tab === "delivery"
                 ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
@@ -250,103 +240,109 @@ const DeliveryDashboard = () => {
             {/* Pickup Orders */}
             {tab === "pickup" && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {pickupOrders.map((order) => (
-                  <div
-                    key={order._id}
-                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
-                  >
-                    <div className="p-5 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 max-w-sm w-full">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xl">👤</span>
-                          <h3 className="text-lg font-semibold text-gray-800 truncate">
-                            {order.userName}
-                          </h3>
-                        </div>
-                        <div
-                          className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
-                            order.status
-                          )}`}
-                        >
-                          {order.status}
-                        </div>
-                      </div>
-
-                      <div className="mt-4 space-y-3 text-sm text-gray-600">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg"> 📦</span>
-                          <p>
-                            <span className="text-black mr-2">
-                              Service Type:
-                            </span>
-                            {order.services[0]?.name}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg"> ℹ️</span>
-                          <p>
-                            <span className="text-black mr-2">
-                              Service Quantity:
-                            </span>
-                            {order.services[0]?.quantity}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg">📞</span>
-                          <p>
-                            <span className="text-black mr-2">Mobile:</span>
-                            {order.userMobile}
-                          </p>
-                        </div>
-
-                        <div className="flex items-start space-x-2">
-                          <span className="mt-1">📍</span>
-                          <p>
-                            <span className="text-black mr-2">
-                              Pickup Address:
-                            </span>
-                            {order.userAddress}
-                          </p>
-                        </div>
-
-                        <div className="flex items-start space-x-2">
-                          <span className="mt-1">📍</span>
-                          <p>
-                            <span className="text-black mr-2">
-                              Delivery Address:
-                            </span>
-                            {order.vendorAddress}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center justify-between space-x-2">
-                          <div className="flex space-x-2">
-                            <span>⏰</span>
-                            <p>
-                              <span className="text-black mr-2">Date:</span>
-                              {new Date(order.createdAt).toLocaleString()}
-                            </p>
+                {pickupOrders.length === 0 ? (
+                  <div className="bg-white rounded-xl shadow-sm p-6 text-center col-span-full">
+                    <p className="text-gray-500">No pickup orders available</p>
+                  </div>
+                ) : (
+                  pickupOrders.map((order) => (
+                    <div
+                      key={order._id}
+                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
+                    >
+                      <div className="p-5 bg-white rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 max-w-sm w-full">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xl">👤</span>
+                            <h3 className="text-lg font-semibold text-gray-800 truncate">
+                              {order.userName}
+                            </h3>
                           </div>
                           <div
                             className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
                               order.status
                             )}`}
                           >
-                            ₹ 50
+                            {order.status}
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleGetDealClick(order._id)}
-                          className="mt-4 w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white py-2 px-4 rounded-lg shadow-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 hover:scale-105"
-                        >
-                          <span>Claim This Delivery</span>
-                          <span className="text-lg">🚚</span>
-                        </button>
+                        <div className="mt-4 space-y-3 text-sm text-gray-600">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg"> 📦</span>
+                            <p>
+                              <span className="text-black mr-2">
+                                Service Type:
+                              </span>
+                              {order.services[0]?.name}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg"> ℹ️</span>
+                            <p>
+                              <span className="text-black mr-2">
+                                Service Quantity:
+                              </span>
+                              {order.services[0]?.quantity}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg">📞</span>
+                            <p>
+                              <span className="text-black mr-2">Mobile:</span>
+                              {order.userMobile}
+                            </p>
+                          </div>
+
+                          <div className="flex items-start space-x-2">
+                            <span className="mt-1">📍</span>
+                            <p>
+                              <span className="text-black mr-2">
+                                Pickup Address:
+                              </span>
+                              {order.userAddress}
+                            </p>
+                          </div>
+
+                          <div className="flex items-start space-x-2">
+                            <span className="mt-1">📍</span>
+                            <p>
+                              <span className="text-black mr-2">
+                                Delivery Address:
+                              </span>
+                              {order.vendorAddress}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center justify-between space-x-2">
+                            <div className="flex space-x-2">
+                              <span>⏰</span>
+                              <p>
+                                <span className="text-black mr-2">Date:</span>
+                                {new Date(order.createdAt).toLocaleString()}
+                              </p>
+                            </div>
+                            <div
+                              className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
+                                order.status
+                              )}`}
+                            >
+                              ₹ 25
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleGetDealClick(order._id)}
+                            className="mt-4 w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white py-2 px-4 rounded-lg shadow-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 hover:scale-105"
+                          >
+                            <span>Claim This Delivery</span>
+                            <span className="text-lg">🚚</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
 
@@ -355,9 +351,7 @@ const DeliveryDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {deliveryOrders.length === 0 ? (
                   <div className="bg-white rounded-xl shadow-sm p-6 text-center col-span-full">
-                    <p className="text-gray-500">
-                      No delivery orders available
-                    </p>
+                    <p className="text-gray-500">No delivery orders available</p>
                   </div>
                 ) : (
                   deliveryOrders.map((order) => (
@@ -365,7 +359,7 @@ const DeliveryDashboard = () => {
                       key={order._id}
                       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
                     >
-                      <div className="p-5 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 max-w-sm w-full">
+                      <div className="p-5 bg-white rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 max-w-sm w-full">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center space-x-2">
                             <span className="text-xl">👤</span>

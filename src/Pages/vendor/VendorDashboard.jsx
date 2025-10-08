@@ -14,9 +14,8 @@ function VendorDashboard() {
   const fetchAssignedOrders = async () => {
     try {
       setLoading(true);
-      // Fixed: Use vendorToken instead of dhobiToken
       const token = localStorage.getItem("vendorToken");
-      
+
       if (!token) {
         toast.error("Please login first");
         return;
@@ -31,8 +30,6 @@ function VendorDashboard() {
       if (!res.ok) {
         if (res.status === 403) {
           toast.error("Access denied. Please login again.");
-          // Optionally redirect to login
-          // window.location.href = '/login';
         } else {
           toast.error(`Error: ${res.status} ${res.statusText}`);
         }
@@ -46,6 +43,26 @@ function VendorDashboard() {
       toast.error("Failed to load orders");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to increment delivery boy's pickup count
+  const incrementDeliveryBoyCount = async (deliveryBoyId) => {
+    try {
+      const token = localStorage.getItem("vendorToken");
+      const res = await fetch(
+        `${API_BASE_URL}/deliveryboy/increment-pickup-count`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ deliveryBoyId }),
+        }
+      );
+    } catch (error) {
+      console.error("Error incrementing delivery boy count:", error);
     }
   };
 
@@ -74,7 +91,17 @@ function VendorDashboard() {
       const data = await res.json();
 
       if (res.ok) {
-        toast.success("Order received successfully!");
+        // Find the order to get delivery boy information
+        const order = orders.find((o) => o._id === orderId);
+
+        // Increment delivery boy's completed pickup count
+        if (order && order.pickupClaimedBy && order.pickupClaimedBy._id) {
+          await incrementDeliveryBoyCount(order.pickupClaimedBy._id);
+        }
+
+        toast.success(
+          "Order received successfully! Delivery boy count updated."
+        );
         setShowOtpField({ ...showOtpField, [orderId]: false });
         setOtpInputs({ ...otpInputs, [orderId]: "" }); // Clear OTP input
         fetchAssignedOrders();
@@ -134,9 +161,7 @@ function VendorDashboard() {
             Vendor Dashboard
           </h1>
           <p className="text-gray-600 mt-2">
-            {activeTab === "new"
-              ? "New orders to process"
-              : "Your Past orders"}
+            {activeTab === "new" ? "New orders to process" : "Your Past orders"}
           </p>
         </div>
 
@@ -223,42 +248,46 @@ function VendorDashboard() {
                       </p>
                     </div>
                     {order.pickupClaimedBy ? (
-                      <div className="flex flex-col space-y-1">
-                        <p>
-                          <span className="text-gray-600 mr-2">
-                            🚚 Agent:
-                          </span>
-                          <span className="text-black italic">
-                            {order.pickupClaimedBy.name}
-                          </span>
-                        </p>
-                        <p>
-                          <span className="text-gray-600 mr-2">
-                            🚚 Agent Contact:
-                          </span>
-                          <span className="text-black italic">
-                            {order.pickupClaimedBy.phone}
-                          </span>
-                        </p>
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <div className="flex flex-col space-y-1">
+                          <p>
+                            <span className="text-gray-600 mr-2">
+                              🚚 Agent:
+                            </span>
+                            <span className="text-black font-medium">
+                              {order.pickupClaimedBy.name}
+                            </span>
+                          </p>
+                          <p>
+                            <span className="text-gray-600 mr-2">
+                              📞 Contact:
+                            </span>
+                            <span className="text-black font-medium">
+                              {order.pickupClaimedBy.phone}
+                            </span>
+                          </p>
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col space-y-1">
-                        <p>
-                          <span className="text-gray-600 mr-2">
-                            🚚 Agent:
-                          </span>
-                          <span className="text-black italic">
-                            Not Assigned Yet
-                          </span>
-                        </p>
-                        <p>
-                          <span className="text-gray-600 mr-2">
-                            🚚 Agent Contact:
-                          </span>
-                          <span className="text-black italic">
-                            Not Assigned Yet
-                          </span>
-                        </p>
+                      <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                        <div className="flex flex-col space-y-1">
+                          <p>
+                            <span className="text-gray-600 mr-2">
+                              🚚 Agent:
+                            </span>
+                            <span className="text-yellow-700 italic">
+                              Not Assigned Yet
+                            </span>
+                          </p>
+                          <p>
+                            <span className="text-gray-600 mr-2">
+                              📞 Contact:
+                            </span>
+                            <span className="text-yellow-700 italic">
+                              Not Assigned Yet
+                            </span>
+                          </p>
+                        </div>
                       </div>
                     )}
                     <div className="text-gray-700">
@@ -297,7 +326,7 @@ function VendorDashboard() {
                             htmlFor={`otp-${order._id}`}
                             className="block text-sm font-medium text-gray-700 mb-1"
                           >
-                            Enter 4-digit OTP
+                            Enter 4-digit OTP from delivery agent
                           </label>
                           <input
                             id={`otp-${order._id}`}
@@ -319,7 +348,7 @@ function VendorDashboard() {
                             onClick={() => handleReceiveOrder(order._id)}
                             className="flex-1 bg-gradient-to-r from-orange-400 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-2 px-4 rounded-lg shadow-sm font-medium transition-all"
                           >
-                            Confirm
+                            Confirm Receipt
                           </button>
                           <button
                             onClick={() => {
@@ -333,6 +362,24 @@ function VendorDashboard() {
                           >
                             Cancel
                           </button>
+                        </div>
+
+                        {/* Info message */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div className="flex items-start">
+                            <span className="text-green-500 mr-2 mt-0.5">
+                              ℹ️
+                            </span>
+                            <div className="text-xs text-green-700">
+                              <p className="font-medium mb-1">Important:</p>
+                              <p>
+                                When you accept this order with the correct OTP,
+                                the delivery agent's completed pickup count will
+                                be automatically updated for their earnings
+                                calculation.
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )

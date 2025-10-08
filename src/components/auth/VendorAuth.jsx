@@ -14,6 +14,7 @@ const VendorAuth = ({
 }) => {
   const isRegistering = vendorStatus === "register";
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Predefined service categories
   const availableServices = [
@@ -156,6 +157,7 @@ const VendorAuth = ({
   const handleRegister = async () => {
     if (!validateForm()) return;
 
+    setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append('name', vendorForm.name.trim());
@@ -193,6 +195,8 @@ const VendorAuth = ({
     } catch (err) {
       console.error("Register error:", err);
       toast.error("Network error. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -208,6 +212,7 @@ const VendorAuth = ({
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const res = await fetch(`${API_BASE_URL}/vendor/login`, {
         method: "POST",
@@ -233,6 +238,8 @@ const VendorAuth = ({
     } catch (err) {
       console.error("Login Request Error:", err);
       toast.error("Network error. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -382,17 +389,26 @@ const VendorAuth = ({
               {/* Register Button */}
               <button
                 onClick={handleRegister}
-                disabled={!vendorForm.livePhoto || !vendorForm.aadhaarPhoto || !vendorForm.services?.length}
-                className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-200 ${
-                  vendorForm.livePhoto && vendorForm.aadhaarPhoto && vendorForm.services?.length
+                disabled={!vendorForm.livePhoto || !vendorForm.aadhaarPhoto || !vendorForm.services?.length || isSubmitting}
+                className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-200 flex items-center justify-center ${
+                  vendorForm.livePhoto && vendorForm.aadhaarPhoto && vendorForm.services?.length && !isSubmitting
                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {vendorForm.livePhoto && vendorForm.aadhaarPhoto && vendorForm.services?.length
-                  ? 'Complete Registration'
-                  : 'Please complete all requirements'
-                }
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing Registration...
+                  </>
+                ) : (
+                  vendorForm.livePhoto && vendorForm.aadhaarPhoto && vendorForm.services?.length
+                    ? 'Complete Registration'
+                    : 'Please complete all requirements'
+                )}
               </button>
 
               {/* Switch to Login */}
@@ -401,7 +417,8 @@ const VendorAuth = ({
                   Already registered?{" "}
                   <button
                     onClick={() => setVendorStatus("login")}
-                    className="text-purple-600 font-semibold hover:text-purple-700"
+                    disabled={isSubmitting}
+                    className="text-purple-600 font-semibold hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
                     Login here
                   </button>
@@ -419,6 +436,7 @@ const VendorAuth = ({
                   value={vendorForm.phone || ''}
                   onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
                   required
+                  disabled={isSubmitting}
                 />
                 
                 <Input
@@ -428,14 +446,26 @@ const VendorAuth = ({
                   value={vendorForm.password || ''}
                   onChange={(val) => setVendorForm({ ...vendorForm, password: val })}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
               <button
                 onClick={handleLogin}
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                Sign In
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing In...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
               </button>
 
               <div className="text-center pt-4 border-t">
@@ -443,7 +473,8 @@ const VendorAuth = ({
                   Don't have an account?{" "}
                   <button
                     onClick={() => setVendorStatus("register")}
-                    className="text-purple-600 font-semibold hover:text-purple-700"
+                    disabled={isSubmitting}
+                    className="text-purple-600 font-semibold hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
                     Register here
                   </button>
@@ -478,7 +509,6 @@ const PhotoSection = ({
   subtitle,
   photoType, 
   icon, 
-  cameraIcon,
   vendorForm, 
   capturePhoto, 
   getImagePreview, 
@@ -519,7 +549,6 @@ const PhotoSection = ({
           isCapturing ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       >
-        <div className="text-4xl mb-2">{cameraIcon}</div>
         <FiCamera className="mx-auto mb-2" size={32} />
         <p className="font-semibold">
           {isCapturing ? 'Opening Camera...' : 'Tap to Capture'}
@@ -533,16 +562,19 @@ const PhotoSection = ({
 );
 
 // Input Component
-const Input = ({ icon, placeholder, value, onChange, type = "text", required = false }) => (
+const Input = ({ icon, placeholder, value, onChange, type = "text", required = false, disabled = false }) => (
   <div className="relative">
     <div className="absolute left-3 top-4 text-gray-400 z-10">{icon}</div>
     <input
       type={type}
       placeholder={placeholder}
-      className="w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white text-gray-900 transition-all duration-200"
+      className={`w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white text-gray-900 transition-all duration-200 ${
+        disabled ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''
+      }`}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       required={required}
+      disabled={disabled}
     />
     {required && !value && (
       <div className="absolute right-3 top-4 text-red-400">*</div>

@@ -3,11 +3,14 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaDownload, FaEye, FaTimes } from "react-icons/fa";
 // Capacitor imports
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+import { FaMoneyBillWave } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const AdminPanel = () => {
+  const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET;
 
@@ -16,7 +19,11 @@ const AdminPanel = () => {
   const [users, setUsers] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [imageModal, setImageModal] = useState({ isOpen: false, src: "", title: "" });
+  const [imageModal, setImageModal] = useState({
+    isOpen: false,
+    src: "",
+    title: "",
+  });
 
   const fetchData = async (role, tab) => {
     setLoading(true);
@@ -103,12 +110,12 @@ const AdminPanel = () => {
         // Mobile app - use Capacitor Filesystem API
         const response = await fetch(url);
         const blob = await response.blob();
-        
+
         // Convert blob to base64
         const base64 = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => {
-            const base64String = reader.result.split(',')[1];
+            const base64String = reader.result.split(",")[1];
             resolve(base64String);
           };
           reader.readAsDataURL(blob);
@@ -122,25 +129,24 @@ const AdminPanel = () => {
         });
 
         toast.success("📥 Image downloaded successfully!");
-        
+
         // Optional: Share the downloaded file
         try {
           await Share.share({
-            title: 'Downloaded Image',
+            title: "Downloaded Image",
             text: `Image saved: ${filename}`,
             url: result.uri,
-            dialogTitle: 'Share Image'
+            dialogTitle: "Share Image",
           });
         } catch (shareError) {
-          console.log('Share not available:', shareError);
+          console.log("Share not available:", shareError);
         }
-
       } else {
         // Web browser - use traditional download method
         const response = await fetch(url);
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = downloadUrl;
         link.download = filename;
         document.body.appendChild(link);
@@ -151,7 +157,7 @@ const AdminPanel = () => {
       }
     } catch (error) {
       toast.error("Failed to download image");
-      console.error('Download failed:', error);
+      console.error("Download failed:", error);
     }
   };
 
@@ -275,13 +281,24 @@ const AdminPanel = () => {
 
       {/* Header */}
       <header className="bg-white shadow-lg sticky top-0 z-10 border-b border-gray-200">
-        <div className="px-6 py-4">
-          <h1 className="text-2xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Admin Dashboard
-          </h1>
-          <p className="text-center text-sm text-gray-500 mt-1">
-            Manage users and approvals
-          </p>
+        <div className="px-6 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Admin Dashboard
+            </h1>
+            <p className="text-center text-sm text-gray-500 mt-1">
+              Manage users and approvals
+            </p>
+          </div>
+
+          {/* Manage Payments Button */}
+          <button
+            onClick={() => navigate("/admin-Withdrawl-Dashboard")}
+            className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-2 rounded-lg shadow hover:opacity-90 transition-all"
+          >
+            <FaMoneyBillWave size={18} />
+            <span className="text-sm font-semibold">Manage Payments</span>
+          </button>
         </div>
 
         {/* Role Tabs */}
@@ -494,7 +511,7 @@ const AdminPanel = () => {
                               <span className="mr-2">📄</span>
                               Document Verification
                             </h3>
-                            
+
                             <div className="grid grid-cols-1 gap-4">
                               {/* For Delivery Boys */}
                               {activeRole === "deliveryboy" && (
@@ -505,7 +522,7 @@ const AdminPanel = () => {
                                     imageUrl={user.livePhoto}
                                     icon="📸"
                                     fileName="live_photo.jpg"
-                                    userName={user.name.replace(/\s+/g, '_')}
+                                    userName={user.name.replace(/\s+/g, "_")}
                                   />
 
                                   {/* Aadhaar Card */}
@@ -514,7 +531,7 @@ const AdminPanel = () => {
                                     imageUrl={user.aadhaarPhoto}
                                     icon="🆔"
                                     fileName="aadhaar.jpg"
-                                    userName={user.name.replace(/\s+/g, '_')}
+                                    userName={user.name.replace(/\s+/g, "_")}
                                   />
 
                                   {/* Driving License */}
@@ -523,7 +540,7 @@ const AdminPanel = () => {
                                     imageUrl={user.licensePhoto}
                                     icon="🚗"
                                     fileName="license.jpg"
-                                    userName={user.name.replace(/\s+/g, '_')}
+                                    userName={user.name.replace(/\s+/g, "_")}
                                   />
                                 </>
                               )}
@@ -537,7 +554,7 @@ const AdminPanel = () => {
                                     imageUrl={user.livePhoto}
                                     icon="📸"
                                     fileName="live_photo.jpg"
-                                    userName={user.name.replace(/\s+/g, '_')}
+                                    userName={user.name.replace(/\s+/g, "_")}
                                   />
 
                                   {/* Aadhaar Card */}
@@ -546,7 +563,7 @@ const AdminPanel = () => {
                                     imageUrl={user.aadhaarPhoto}
                                     icon="🆔"
                                     fileName="aadhaar.jpg"
-                                    userName={user.name.replace(/\s+/g, '_')}
+                                    userName={user.name.replace(/\s+/g, "_")}
                                   />
                                 </>
                               )}
@@ -554,26 +571,28 @@ const AdminPanel = () => {
                           </div>
 
                           {/* Store Images (Only for Vendors) */}
-                          {activeRole === "vendor" && user.storeImages && user.storeImages.length > 0 && (
-                            <div className="p-4 bg-orange-50 rounded-lg">
-                              <h3 className="font-semibold text-gray-800 flex items-center mb-4">
-                                <span className="mr-2">🏪</span>
-                                Store Images ({user.storeImages.length})
-                              </h3>
-                              <div className="grid grid-cols-1 gap-4">
-                                {user.storeImages.map((imageUrl, index) => (
-                                  <DocumentCard
-                                    key={index}
-                                    title={`Store Image ${index + 1}`}
-                                    imageUrl={imageUrl}
-                                    icon="🏪"
-                                    fileName={`store_image_${index + 1}.jpg`}
-                                    userName={user.name.replace(/\s+/g, '_')}
-                                  />
-                                ))}
+                          {activeRole === "vendor" &&
+                            user.storeImages &&
+                            user.storeImages.length > 0 && (
+                              <div className="p-4 bg-orange-50 rounded-lg">
+                                <h3 className="font-semibold text-gray-800 flex items-center mb-4">
+                                  <span className="mr-2">🏪</span>
+                                  Store Images ({user.storeImages.length})
+                                </h3>
+                                <div className="grid grid-cols-1 gap-4">
+                                  {user.storeImages.map((imageUrl, index) => (
+                                    <DocumentCard
+                                      key={index}
+                                      title={`Store Image ${index + 1}`}
+                                      imageUrl={imageUrl}
+                                      icon="🏪"
+                                      fileName={`store_image_${index + 1}.jpg`}
+                                      userName={user.name.replace(/\s+/g, "_")}
+                                    />
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
 
                           {/* Services (for vendors) */}
                           {activeRole === "vendor" &&
@@ -595,7 +614,7 @@ const AdminPanel = () => {
                                           {service.name}
                                         </h4>
                                         <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">
-                                          ₹{service.price}
+                                          ₹{service.basePrice}
                                         </span>
                                       </div>
                                       <p className="text-gray-600 text-sm">
