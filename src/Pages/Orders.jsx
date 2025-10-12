@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { RiLoader4Line } from "react-icons/ri";
+import { FaSync } from "react-icons/fa";
 import { auth } from "../firebase";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
@@ -15,6 +16,8 @@ export default function Orders() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [generatedOTPs, setGeneratedOTPs] = useState({});
+  const [generatingOTP, setGeneratingOTP] = useState({});
 
   const statusSteps = [
     "Scheduled",
@@ -108,8 +111,55 @@ export default function Orders() {
         return "bg-indigo-100 text-indigo-800";
       case "In Progress":
         return "bg-amber-100 text-amber-800";
+      case "Delievery Picked Up":
+        return "bg-purple-100 text-purple-800";
       default:
         return "bg-blue-100 text-blue-800";
+    }
+  };
+
+  const shouldShowOTP = (status) => {
+    const otpVisibleStatuses = ["Scheduled", "In Progress", "Ready for Pickup"];
+    return otpVisibleStatuses.includes(status);
+  };
+
+  const shouldShowGenerateOTP = (status) => {
+    return status === "Delievery Picked Up";
+  };
+
+  const handleGenerateOTP = async (orderId) => {
+    try {
+      setGeneratingOTP({ ...generatingOTP, [orderId]: true });
+      const user = auth.currentUser;
+      
+      if (!user) {
+        toast.error("Please login again!");
+        return;
+      }
+
+      const token = await user.getIdToken();
+
+      const res = await axios.post(
+        `${API_BASE_URL}/order/regenerate-otp/${orderId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.data && res.data.newOtp) {
+        setGeneratedOTPs({ ...generatedOTPs, [orderId]: res.data.newOtp });
+        toast.success("New OTP generated successfully!");
+      } else {
+        toast.error(res.data.message || "Failed to generate OTP");
+      }
+    } catch (error) {
+      console.error("Generate OTP error:", error);
+      toast.error(error.response?.data?.message || "Error generating OTP");
+    } finally {
+      setGeneratingOTP({ ...generatingOTP, [orderId]: false });
     }
   };
 
@@ -144,7 +194,6 @@ export default function Orders() {
       toast.success("Order cancelled successfully.");
       setShowCancelConfirm(false);
       setShowDetailModal(false);
-      // refresh orders
       fetchOrders();
     } catch (err) {
       console.error("Error cancelling order:", err);
@@ -219,13 +268,15 @@ export default function Orders() {
                               : ""}
                           </p>
                         </div>
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
-                            order.status
-                          )}`}
-                        >
-                          OTP : {order.otp}
-                        </span>
+                        {shouldShowOTP(order.status) && (
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
+                              order.status
+                            )}`}
+                          >
+                            OTP : {order.otp}
+                          </span>
+                        )}
                       </div>
                       <span className="text-gray-600">
                         {order.services[0]?.name} (x
@@ -254,6 +305,54 @@ export default function Orders() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Generate OTP Button */}
+                  {shouldShowGenerateOTP(order.status) && (
+                    <div className="mt-3">
+                      {generatedOTPs[order._id] ? (
+                        <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div>
+                            <p className="text-xs text-green-600 font-medium mb-1">
+                              New OTP Generated
+                            </p>
+                            <p className="text-2xl font-bold text-green-800 tracking-wider">
+                              {generatedOTPs[order._id]}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleGenerateOTP(order._id)}
+                            disabled={generatingOTP[order._id]}
+                            className="p-2 bg-green-100 hover:bg-green-200 rounded-lg transition-colors disabled:opacity-50"
+                            title="Regenerate OTP"
+                          >
+                            <FaSync
+                              className={`text-green-600 ${
+                                generatingOTP[order._id] ? "animate-spin" : ""
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleGenerateOTP(order._id)}
+                          disabled={generatingOTP[order._id]}
+                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {generatingOTP[order._id] ? (
+                            <>
+                              <FaSync className="animate-spin" />
+                              <span>Generating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <FaSync />
+                              <span>Generate OTP</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -339,6 +438,76 @@ export default function Orders() {
                   </p>
                 </div>
               </div>
+
+              {/* Show OTP in detail modal if applicable */}
+              {shouldShowOTP(selectedOrder.status) && (
+                <div className="border-t border-gray-200 pt-4">
+                  <h3 className="font-medium text-gray-800 mb-2">
+                    Order OTP
+                  </h3>
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                    <p className="text-sm text-indigo-600 font-medium mb-1">
+                      Share this OTP with delivery person
+                    </p>
+                    <p className="text-3xl font-bold text-indigo-800 tracking-wider">
+                      {selectedOrder.otp}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Generate OTP in detail modal */}
+              {shouldShowGenerateOTP(selectedOrder.status) && (
+                <div className="border-t border-gray-200 pt-4">
+                  <h3 className="font-medium text-gray-800 mb-3">
+                    Delivery OTP
+                  </h3>
+                  {generatedOTPs[selectedOrder._id] ? (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div>
+                        <p className="text-xs text-green-600 font-medium mb-1">
+                          New OTP Generated
+                        </p>
+                        <p className="text-2xl font-bold text-green-800 tracking-wider">
+                          {generatedOTPs[selectedOrder._id]}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleGenerateOTP(selectedOrder._id)}
+                        disabled={generatingOTP[selectedOrder._id]}
+                        className="p-2 bg-green-100 hover:bg-green-200 rounded-lg transition-colors disabled:opacity-50"
+                        title="Regenerate OTP"
+                      >
+                        <FaSync
+                          className={`text-green-600 ${
+                            generatingOTP[selectedOrder._id]
+                              ? "animate-spin"
+                              : ""
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleGenerateOTP(selectedOrder._id)}
+                      disabled={generatingOTP[selectedOrder._id]}
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {generatingOTP[selectedOrder._id] ? (
+                        <>
+                          <FaSync className="animate-spin" />
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FaSync />
+                          <span>Generate OTP</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Order Summary */}
               <div className="border-t border-gray-200 pt-4">

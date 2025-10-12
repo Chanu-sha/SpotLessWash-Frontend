@@ -1,8 +1,23 @@
 import React, { useContext, useState } from "react";
-import { FiUser, FiMail, FiPhone, FiLock, FiCamera, FiUpload, FiX } from "react-icons/fi";
+import {
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiLock,
+  FiCamera,
+  FiUpload,
+  FiX,
+  FiEye,
+  FiEyeOff,
+} from "react-icons/fi";
 import { toast } from "react-toastify";
 import { UserContext } from "../../context/UserContext";
-import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera';
+import {
+  Camera,
+  CameraResultType,
+  CameraSource,
+  CameraDirection,
+} from "@capacitor/camera";
 
 const VendorAuth = ({
   vendorForm,
@@ -16,10 +31,14 @@ const VendorAuth = ({
   const [isCapturing, setIsCapturing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // password visibility states
+  const [registerPassVisible, setRegisterPassVisible] = useState(false);
+  const [loginPassVisible, setLoginPassVisible] = useState(false);
+
   // Predefined service categories
   const availableServices = [
     "Shirts",
-    "Pants", 
+    "Pants",
     "Ethnic Wear",
     "Home Linen",
     "Shoes",
@@ -29,43 +48,42 @@ const VendorAuth = ({
   const capturePhoto = async (photoType) => {
     try {
       setIsCapturing(true);
-
       const image = await Camera.getPhoto({
         quality: 85,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
-        direction: photoType === 'live' ? CameraDirection.Front : CameraDirection.Rear,
+        direction:
+          photoType === "live" ? CameraDirection.Front : CameraDirection.Rear,
         width: 1024,
         height: 768,
         saveToGallery: false,
-        correctOrientation: true
+        correctOrientation: true,
       });
 
       // Convert base64 to File object
       const base64Data = image.dataUrl;
       const response = await fetch(base64Data);
       const blob = await response.blob();
-      const file = new File([blob], `${photoType}_photo.jpg`, { 
-        type: 'image/jpeg',
-        lastModified: Date.now()
+      const file = new File([blob], `${photoType}_photo.jpg`, {
+        type: "image/jpeg",
+        lastModified: Date.now(),
       });
 
-      setVendorForm(prev => ({
+      setVendorForm((prev) => ({
         ...prev,
         [`${photoType}Photo`]: file,
-        [`${photoType}PhotoPreview`]: base64Data
+        [`${photoType}PhotoPreview`]: base64Data,
       }));
 
-      const photoName = photoType === 'live' ? 'Live Photo' : 'Aadhaar Card';
+      const photoName = photoType === "live" ? "Live Photo" : "Aadhaar Card";
       toast.success(`${photoName} captured successfully!`);
-
     } catch (error) {
-      console.error('Camera error:', error);
-      if (error.message === 'User cancelled photos app') {
-        toast.info('Photo capture cancelled');
+      console.error("Camera error:", error);
+      if (error.message === "User cancelled photos app") {
+        toast.info("Photo capture cancelled");
       } else {
-        toast.error('Camera not available. Please check permissions.');
+        toast.error("Camera not available. Please check permissions.");
       }
     } finally {
       setIsCapturing(false);
@@ -83,13 +101,13 @@ const VendorAuth = ({
 
   // Remove photo
   const removePhoto = (photoType) => {
-    setVendorForm(prev => ({
+    setVendorForm((prev) => ({
       ...prev,
       [`${photoType}Photo`]: null,
-      [`${photoType}PhotoPreview`]: null
+      [`${photoType}PhotoPreview`]: null,
     }));
-    
-    const photoName = photoType === 'live' ? 'Live Photo' : 'Aadhaar Card';
+
+    const photoName = photoType === "live" ? "Live Photo" : "Aadhaar Card";
     toast.info(`${photoName} removed`);
   };
 
@@ -112,7 +130,7 @@ const VendorAuth = ({
       s.name === serviceName
         ? {
             ...s,
-            [field]: field === "price" ? value : value,
+            [field]: value,
           }
         : s
     );
@@ -127,7 +145,7 @@ const VendorAuth = ({
       toast.error("Please enter your full name");
       return false;
     }
-    if (!vendorForm.email?.trim() || !vendorForm.email.includes('@')) {
+    if (!vendorForm.email?.trim() || !vendorForm.email.includes("@")) {
       toast.error("Please enter a valid email");
       return false;
     }
@@ -160,13 +178,13 @@ const VendorAuth = ({
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append('name', vendorForm.name.trim());
-      formData.append('email', vendorForm.email.trim().toLowerCase());
-      formData.append('phone', vendorForm.phone.trim());
-      formData.append('password', vendorForm.password);
-      formData.append('services', JSON.stringify(vendorForm.services));
-      formData.append('livePhoto', vendorForm.livePhoto);
-      formData.append('aadhaarPhoto', vendorForm.aadhaarPhoto);
+      formData.append("name", vendorForm.name.trim());
+      formData.append("email", vendorForm.email.trim().toLowerCase());
+      formData.append("phone", vendorForm.phone.trim());
+      formData.append("password", vendorForm.password);
+      formData.append("services", JSON.stringify(vendorForm.services));
+      formData.append("livePhoto", vendorForm.livePhoto);
+      formData.append("aadhaarPhoto", vendorForm.aadhaarPhoto);
 
       const res = await fetch(`${API_BASE_URL}/vendor/register`, {
         method: "POST",
@@ -177,17 +195,16 @@ const VendorAuth = ({
       if (res.ok) {
         toast.success(data.message);
         setVendorStatus("pending");
-        // Clear form after successful registration
         setVendorForm({
-          name: '',
-          email: '',
-          phone: '',
-          password: '',
+          name: "",
+          email: "",
+          phone: "",
+          password: "",
           services: [],
           livePhoto: null,
           aadhaarPhoto: null,
           livePhotoPreview: null,
-          aadhaarPhotoPreview: null
+          aadhaarPhotoPreview: null,
         });
       } else {
         toast.error(data.message || "Registration failed");
@@ -217,9 +234,9 @@ const VendorAuth = ({
       const res = await fetch(`${API_BASE_URL}/vendor/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          phone: phone.trim(), 
-          password 
+        body: JSON.stringify({
+          phone: phone.trim(),
+          password,
         }),
       });
 
@@ -246,10 +263,9 @@ const VendorAuth = ({
   return (
     <div className="min-h-screen ">
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
           <h2 className="text-2xl font-bold text-white">
-            {isRegistering ? 'Register as Vendor' : 'Vendor Login'}
+            {isRegistering ? "Register as Vendor" : "Vendor Login"}
           </h2>
         </div>
 
@@ -261,40 +277,50 @@ const VendorAuth = ({
                 <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
                   Personal Information
                 </h3>
-                
                 <Input
                   icon={<FiUser />}
                   placeholder="Full Name"
-                  value={vendorForm.name || ''}
-                  onChange={(val) => setVendorForm({ ...vendorForm, name: val })}
+                  value={vendorForm.name || ""}
+                  onChange={(val) =>
+                    setVendorForm({ ...vendorForm, name: val })
+                  }
                   required
+                  disabled={isSubmitting}
                 />
-                
                 <Input
                   icon={<FiMail />}
                   placeholder="Email Address"
                   type="email"
-                  value={vendorForm.email || ''}
-                  onChange={(val) => setVendorForm({ ...vendorForm, email: val })}
+                  value={vendorForm.email || ""}
+                  onChange={(val) =>
+                    setVendorForm({ ...vendorForm, email: val })
+                  }
                   required
+                  disabled={isSubmitting}
                 />
-                
                 <Input
                   icon={<FiPhone />}
                   placeholder="Phone Number"
                   type="tel"
-                  value={vendorForm.phone || ''}
-                  onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
+                  value={vendorForm.phone || ""}
+                  onChange={(val) =>
+                    setVendorForm({ ...vendorForm, phone: val })
+                  }
                   required
+                  disabled={isSubmitting}
                 />
-                
                 <Input
                   icon={<FiLock />}
                   placeholder="Create Password"
                   type="password"
-                  value={vendorForm.password || ''}
-                  onChange={(val) => setVendorForm({ ...vendorForm, password: val })}
+                  value={vendorForm.password || ""}
+                  onChange={(val) =>
+                    setVendorForm({ ...vendorForm, password: val })
+                  }
                   required
+                  disabled={isSubmitting}
+                  passwordVisible={registerPassVisible}
+                  setPasswordVisible={setRegisterPassVisible}
                 />
               </div>
 
@@ -303,7 +329,6 @@ const VendorAuth = ({
                 <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
                   Services You Provide
                 </h3>
-                
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50">
                   {availableServices.map((service, idx) => {
                     const selected = (vendorForm.services || []).find(
@@ -318,7 +343,9 @@ const VendorAuth = ({
                             onChange={() => toggleService(service)}
                             className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                           />
-                          <span className="font-medium text-gray-800">{service}</span>
+                          <span className="font-medium text-gray-800">
+                            {service}
+                          </span>
                         </label>
 
                         {selected && (
@@ -341,7 +368,11 @@ const VendorAuth = ({
                               placeholder="Price (₹)"
                               value={selected.price}
                               onChange={(e) =>
-                                updateServiceField(service, "price", e.target.value)
+                                updateServiceField(
+                                  service,
+                                  "price",
+                                  e.target.value
+                                )
                               }
                               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
                             />
@@ -358,8 +389,6 @@ const VendorAuth = ({
                 <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
                   Required Documents
                 </h3>
-
-                {/* Live Photo */}
                 <PhotoSection
                   title="Live Photo"
                   subtitle="Take a clear selfie"
@@ -371,8 +400,6 @@ const VendorAuth = ({
                   removePhoto={removePhoto}
                   isCapturing={isCapturing}
                 />
-
-                {/* Aadhaar Card */}
                 <PhotoSection
                   title="Aadhaar Card"
                   subtitle="Capture clear photo of your Aadhaar card"
@@ -389,29 +416,54 @@ const VendorAuth = ({
               {/* Register Button */}
               <button
                 onClick={handleRegister}
-                disabled={!vendorForm.livePhoto || !vendorForm.aadhaarPhoto || !vendorForm.services?.length || isSubmitting}
+                disabled={
+                  !vendorForm.livePhoto ||
+                  !vendorForm.aadhaarPhoto ||
+                  !vendorForm.services?.length ||
+                  isSubmitting
+                }
                 className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-200 flex items-center justify-center ${
-                  vendorForm.livePhoto && vendorForm.aadhaarPhoto && vendorForm.services?.length && !isSubmitting
-                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  vendorForm.livePhoto &&
+                  vendorForm.aadhaarPhoto &&
+                  vendorForm.services?.length &&
+                  !isSubmitting
+                    ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Processing Registration...
                   </>
+                ) : vendorForm.livePhoto &&
+                  vendorForm.aadhaarPhoto &&
+                  vendorForm.services?.length ? (
+                  "Complete Registration"
                 ) : (
-                  vendorForm.livePhoto && vendorForm.aadhaarPhoto && vendorForm.services?.length
-                    ? 'Complete Registration'
-                    : 'Please complete all requirements'
+                  "Please complete all requirements"
                 )}
               </button>
 
-              {/* Switch to Login */}
               <div className="text-center pt-4 border-t">
                 <p className="text-gray-600">
                   Already registered?{" "}
@@ -433,20 +485,25 @@ const VendorAuth = ({
                   icon={<FiPhone />}
                   placeholder="Phone Number"
                   type="tel"
-                  value={vendorForm.phone || ''}
-                  onChange={(val) => setVendorForm({ ...vendorForm, phone: val })}
+                  value={vendorForm.phone || ""}
+                  onChange={(val) =>
+                    setVendorForm({ ...vendorForm, phone: val })
+                  }
                   required
                   disabled={isSubmitting}
                 />
-                
                 <Input
                   icon={<FiLock />}
                   placeholder="Password"
                   type="password"
-                  value={vendorForm.password || ''}
-                  onChange={(val) => setVendorForm({ ...vendorForm, password: val })}
+                  value={vendorForm.password || ""}
+                  onChange={(val) =>
+                    setVendorForm({ ...vendorForm, password: val })
+                  }
                   required
                   disabled={isSubmitting}
+                  passwordVisible={loginPassVisible}
+                  setPasswordVisible={setLoginPassVisible}
                 />
               </div>
 
@@ -457,14 +514,30 @@ const VendorAuth = ({
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Signing In...
                   </>
                 ) : (
-                  'Sign In'
+                  "Sign In"
                 )}
               </button>
 
@@ -493,7 +566,8 @@ const VendorAuth = ({
                 Registration Pending
               </p>
               <p className="text-yellow-700 text-sm text-center mt-1">
-                Your documents are being verified. We'll notify you once approved.
+                Your documents are being verified. We'll notify you once
+                approved.
               </p>
             </div>
           )}
@@ -503,17 +577,63 @@ const VendorAuth = ({
   );
 };
 
+// Input Component with password toggle
+const Input = ({
+  icon,
+  placeholder,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  disabled = false,
+  passwordVisible,
+  setPasswordVisible,
+  ...rest
+}) => (
+  <div className="relative">
+    <div className="absolute left-3 top-4 text-gray-400 z-10">{icon}</div>
+    <input
+      type={
+        type === "password" ? (passwordVisible ? "text" : "password") : type
+      }
+      placeholder={placeholder}
+      className={`w-full pl-11 pr-12 py-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white text-gray-900 transition-all duration-200 ${
+        disabled ? "bg-gray-100 cursor-not-allowed opacity-70" : ""
+      }`}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      required={required}
+      disabled={disabled}
+      {...rest}
+    />
+    {type === "password" && (
+      <button
+        type="button"
+        onClick={() => setPasswordVisible((v) => !v)}
+        tabIndex={-1}
+        disabled={disabled}
+        className="absolute right-3 top-4 text-xl text-gray-400 hover:text-gray-600 focus:outline-none"
+      >
+        {passwordVisible ? <FiEye /> : <FiEyeOff />}
+      </button>
+    )}
+    {required && !value && (
+      <div className="absolute right-10 top-4 text-red-400">*</div>
+    )}
+  </div>
+);
+
 // Photo Section Component
-const PhotoSection = ({ 
-  title, 
+const PhotoSection = ({
+  title,
   subtitle,
-  photoType, 
-  icon, 
-  vendorForm, 
-  capturePhoto, 
-  getImagePreview, 
+  photoType,
+  icon,
+  vendorForm,
+  capturePhoto,
+  getImagePreview,
   removePhoto,
-  isCapturing 
+  isCapturing,
 }) => (
   <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50">
     <div className="flex items-center mb-3">
@@ -523,7 +643,6 @@ const PhotoSection = ({
         <p className="text-sm text-gray-600">{subtitle}</p>
       </div>
     </div>
-    
     {vendorForm[`${photoType}Photo`] ? (
       <div className="relative inline-block">
         <img
@@ -538,7 +657,9 @@ const PhotoSection = ({
           <FiX size={16} />
         </button>
         <div className="mt-2 text-center">
-          <span className="text-green-600 font-medium text-sm">✓ Photo Captured</span>
+          <span className="text-green-600 font-medium text-sm">
+            ✓ Photo Captured
+          </span>
         </div>
       </div>
     ) : (
@@ -546,38 +667,19 @@ const PhotoSection = ({
         onClick={() => capturePhoto(photoType)}
         disabled={isCapturing}
         className={`w-full border-2 border-dashed border-purple-300 rounded-lg p-6 text-purple-600 hover:border-purple-400 hover:bg-purple-50 transition-all duration-200 ${
-          isCapturing ? 'opacity-50 cursor-not-allowed' : ''
+          isCapturing ? "opacity-50 cursor-not-allowed" : ""
         }`}
       >
         <FiCamera className="mx-auto mb-2" size={32} />
         <p className="font-semibold">
-          {isCapturing ? 'Opening Camera...' : 'Tap to Capture'}
+          {isCapturing ? "Opening Camera..." : "Tap to Capture"}
         </p>
         <p className="text-xs text-gray-500 mt-1">
-          {photoType === 'live' ? 'Front camera will open' : 'Back camera will open'}
+          {photoType === "live"
+            ? "Front camera will open"
+            : "Back camera will open"}
         </p>
       </button>
-    )}
-  </div>
-);
-
-// Input Component
-const Input = ({ icon, placeholder, value, onChange, type = "text", required = false, disabled = false }) => (
-  <div className="relative">
-    <div className="absolute left-3 top-4 text-gray-400 z-10">{icon}</div>
-    <input
-      type={type}
-      placeholder={placeholder}
-      className={`w-full pl-11 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white text-gray-900 transition-all duration-200 ${
-        disabled ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''
-      }`}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      required={required}
-      disabled={disabled}
-    />
-    {required && !value && (
-      <div className="absolute right-3 top-4 text-red-400">*</div>
     )}
   </div>
 );

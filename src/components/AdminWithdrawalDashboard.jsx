@@ -22,7 +22,7 @@ const AdminWithdrawalDashboard = () => {
   const [adminNote, setAdminNote] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("deliveryBoy"); // deliveryBoy or vendor
+  const [activeTab, setActiveTab] = useState("deliveryBoy");
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_SECRET;

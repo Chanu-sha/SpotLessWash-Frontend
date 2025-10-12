@@ -1,5 +1,6 @@
-import { FiUser, FiLock } from "react-icons/fi";
+import { FiUser, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { toast } from "react-toastify";
+import { useState } from "react";
 
 const AdminAuth = ({ adminCreds, setAdminCreds, API_BASE_URL, navigate }) => {
   const handleAdminLogin = async () => {
@@ -16,9 +17,24 @@ const AdminAuth = ({ adminCreds, setAdminCreds, API_BASE_URL, navigate }) => {
 
   return (
     <div className="space-y-4">
-      <Input icon={<FiUser />} placeholder="Admin Username" value={adminCreds.username} onChange={(val) => setAdminCreds({ ...adminCreds, username: val })} />
-      <Input icon={<FiLock />} placeholder="Password" type="password" value={adminCreds.password} onChange={(val) => setAdminCreds({ ...adminCreds, password: val })} />
-      <button onClick={handleAdminLogin} className="w-full bg-gradient-to-r from-red-600 to-sky-600 text-white py-3 rounded-lg">Access Admin Panel</button>
+      <Input
+        icon={<FiUser />}
+        placeholder="Admin Username"
+        value={adminCreds.username}
+        onChange={(val) => setAdminCreds({ ...adminCreds, username: val })}
+      />
+      <PasswordInput
+        icon={<FiLock />}
+        placeholder="Password"
+        value={adminCreds.password}
+        onChange={(val) => setAdminCreds({ ...adminCreds, password: val })}
+      />
+      <button
+        onClick={handleAdminLogin}
+        className="w-full bg-gradient-to-r from-red-600 to-sky-600 text-white py-3 rounded-lg"
+      >
+        Access Admin Panel
+      </button>
     </div>
   );
 };
@@ -35,5 +51,28 @@ const Input = ({ icon, placeholder, value, onChange, type = "text" }) => (
     />
   </div>
 );
+
+const PasswordInput = ({ icon, placeholder, value, onChange }) => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  return (
+    <div className="relative">
+      <div className="absolute left-3 top-3 text-gray-400">{icon}</div>
+      <input
+        type={showPassword ? "text" : "password"}
+        placeholder={placeholder}
+        className="w-full pl-10 pr-10 py-3 border rounded-lg"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <div
+        className="absolute right-3 top-3 text-gray-400 cursor-pointer"
+        onClick={() => setShowPassword(!showPassword)}
+      >
+        {showPassword ? <FiEyeOff /> : <FiEye />}
+      </div>
+    </div>
+  );
+};
 
 export default AdminAuth;

@@ -81,7 +81,6 @@ const Services = () => {
     });
   };
 
-  // YouTube style Razorpay implementation
   const handleRazorpayPayment = async () => {
     if (!orderDetails) {
       toast.error("Order details missing");
@@ -108,16 +107,15 @@ const Services = () => {
       // Get Firebase token
       const token = await getFirebaseIdToken();
 
-      // Step 1: Create Razorpay order (YouTube style)
       toast.info("Creating payment order...");
-      
+
       const orderResponse = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/order/payment/create-order`,
         {
           amount: totalAmount,
           currency: "INR",
           receipt: `order_${Date.now()}`,
-          description: `Payment for ${currentService.name}`
+          description: `Payment for ${currentService.name}`,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -128,26 +126,23 @@ const Services = () => {
         );
       }
 
-      const { order_id, amount, key_id, product_name, description } = orderResponse.data;
+      const { order_id, amount, key_id, product_name, description } =
+        orderResponse.data;
 
-      // Step 2: Configure Razorpay options (YouTube style)
       const options = {
         key: key_id,
         amount: amount,
         currency: "INR",
-        name: product_name,
+        name: "SpotlessWash",
         description: description,
-        image: "https://cdn-icons-png.flaticon.com/512/3003/3003984.png",
+        image: "/servicepagepaymentimage.png",
         order_id: order_id,
 
         // Payment success handler
         handler: async function (response) {
-          console.log("Payment successful:", response);
-
           try {
             toast.info("Verifying payment...");
 
-            // Step 3: Verify payment
             const verifyResponse = await axios.post(
               `${import.meta.env.VITE_API_BASE_URL}/order/payment/verify`,
               {
@@ -160,8 +155,7 @@ const Services = () => {
 
             if (verifyResponse.data.success) {
               toast.success("Payment verified successfully!");
-              
-              // Step 4: Place order
+
               await placeOrder(
                 orderDetails,
                 "online",
@@ -199,13 +193,35 @@ const Services = () => {
           color: "#F97316",
         },
 
+        config: {
+          display: {
+            blocks: {
+              banks: {
+                name: "Pay using UPI",
+                instruments: [
+                  {
+                    method: "upi",
+                  },
+                ],
+              },
+            },
+            sequence: ["block.banks"],
+            preferences: {
+              show_default_blocks: true,
+            },
+          },
+        },
+
         modal: {
           ondismiss: function () {
-            console.log("Payment cancelled by user");
             toast.info("Payment cancelled");
             setProcessingPayment(false);
             setShowPaymentModal(true);
           },
+          // Escape key closes modal
+          escape: true,
+          // Click outside doesn't close modal
+          backdropclose: false,
         },
       };
 
@@ -270,7 +286,8 @@ const Services = () => {
         assignedDhobi: selectedVendor._id,
         paymentMethod: paymentMethod,
         paymentId: paymentId,
-        paymentStatus: paymentStatus,
+        // Set correct payment status based on method
+        paymentStatus: paymentMethod === "online" ? "paid" : "pending",
       };
 
       const token = await getFirebaseIdToken();
@@ -312,7 +329,7 @@ const Services = () => {
   };
 
   const handlePaymentMethodSelect = async (method) => {
-    if (method === "cod") {
+    if (method === "cashOnPickup") {
       setShowPaymentModal(false);
       try {
         await placeOrder(orderDetails, "cod", null, "pending");
@@ -437,16 +454,11 @@ const Services = () => {
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-800 truncate">
-                  Our Laundry Services
+                  SpotlessWash
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
                   Professional laundry vendors near you
                 </p>
-              </div>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 ml-3">
-                <span className="text-orange-500 font-semibold text-sm sm:text-base">
-                  LS
-                </span>
               </div>
             </div>
           </div>

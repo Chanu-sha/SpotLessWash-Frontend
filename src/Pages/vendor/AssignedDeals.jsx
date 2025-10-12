@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FaSync } from "react-icons/fa";
 import VendorWalletComponent from "../../components/vendor/VendorWalletComponent";
 
 function AssignedDeals() {
@@ -11,20 +12,20 @@ function AssignedDeals() {
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [vendorServices, setVendorServices] = useState([]);
+  const [generatedOTPs, setGeneratedOTPs] = useState({});
+  const [generatingOTP, setGeneratingOTP] = useState({});
   const token = localStorage.getItem("vendorToken");
 
-  // NEW: Calculate vendor earnings based on base price per piece
+  // Calculate vendor earnings based on base price per piece
   const calculateVendorEarnings = (services) => {
     if (!services || services.length === 0) return 0;
 
     let totalEarnings = 0;
     services.forEach((service) => {
-      // Find vendor's base price for this service
       const vendorService = vendorServices.find(
         (vs) => vs.name === service.name
       );
       if (vendorService) {
-        // Vendor earns: basePrice × quantity
         totalEarnings += vendorService.basePrice * service.quantity;
       }
     });
@@ -49,7 +50,7 @@ function AssignedDeals() {
     }
   };
 
-  // fetch orders
+  // Fetch orders
   const fetchAssignedOrders = async () => {
     try {
       setLoading(true);
@@ -68,13 +69,42 @@ function AssignedDeals() {
     }
   };
 
-  // open confirm popup
+  // Generate OTP for Picking Up Orders
+  const handleGenerateOTP = async (orderId) => {
+    try {
+      setGeneratingOTP({ ...generatingOTP, [orderId]: true });
+
+      const res = await fetch(`${API_BASE_URL}/order/regenerate-otp/${orderId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setGeneratedOTPs({ ...generatedOTPs, [orderId]: data.newOtp });
+        toast.success("New OTP generated successfully!");
+      } else {
+        toast.error(data.message || "Failed to generate OTP");
+      }
+    } catch (error) {
+      console.error("Generate OTP error:", error);
+      toast.error("Error generating OTP");
+    } finally {
+      setGeneratingOTP({ ...generatingOTP, [orderId]: false });
+    }
+  };
+
+  // Open confirm popup
   const handleMarkAsWashed = (orderId) => {
     setSelectedOrderId(orderId);
     setShowConfirmPopup(true);
   };
 
-  // UPDATED: confirm mark as washed - WITH PROPER ORDER COUNT UPDATE
+  // Confirm mark as washed - WITH PROPER ORDER COUNT UPDATE
   const handleConfirmWashed = async () => {
     if (!selectedOrderId) return;
 
@@ -120,8 +150,6 @@ function AssignedDeals() {
 
           // REFRESH ALL DATA
           await fetchAssignedOrders();
-          // Refresh wallet data if you have a function for it
-          // await fetchWalletData();
 
           toast.success(
             `Order marked as Washed! Earned ₹${walletData.earningsAdded}`
@@ -154,7 +182,7 @@ function AssignedDeals() {
     fetchAssignedOrders();
   }, []);
 
-  // filter by active tab
+  // Filter by active tab
   const filteredOrders = orders.filter((order) => {
     if (activeTab === "washing") return order.status === "Washing";
     if (activeTab === "washed") return order.status === "Washed";
@@ -270,7 +298,7 @@ function AssignedDeals() {
         </div>
 
         {/* Tabs */}
-        <div className="flex mb-6  bg-white rounded-lg shadow-sm p-1">
+        <div className="flex mb-6 bg-white rounded-lg shadow-sm p-1">
           {/* Washing */}
           <button
             className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all ${
@@ -352,10 +380,10 @@ function AssignedDeals() {
             <h3 className="text-lg font-medium text-gray-500">
               No
               {activeTab === "washing"
-                ? "washing"
+                ? " washing"
                 : activeTab === "washed"
-                ? "washed"
-                : "picking up"}
+                ? " washed"
+                : " picking up"}
               orders available
             </h3>
           </div>
@@ -384,11 +412,6 @@ function AssignedDeals() {
                         <span className={getStatusBadge(order.status)}>
                           {order.status}
                         </span>
-                        {activeTab !== "washing" && order.otp && (
-                          <div className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                            OTP: {order.otp}
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -480,7 +503,7 @@ function AssignedDeals() {
                       </p>
                     </div>
 
-                    {/* Action */}
+                    {/* Action Buttons */}
                     {activeTab === "washing" && (
                       <button
                         onClick={() => handleMarkAsWashed(order._id)}
@@ -488,6 +511,54 @@ function AssignedDeals() {
                       >
                         Mark as Washed & Earn ₹{orderVendorEarnings}
                       </button>
+                    )}
+
+                    {/* OTP Section for Picking Up Orders ONLY */}
+                    {activeTab === "pickingUp" && (
+                      <div className="mt-4 space-y-3">
+                        {generatedOTPs[order._id] ? (
+                          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div>
+                              <p className="text-xs text-green-600 font-medium mb-1">
+                                OTP for Delivery Pickup
+                              </p>
+                              <p className="text-2xl font-bold text-green-800 tracking-wider">
+                                {generatedOTPs[order._id]}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleGenerateOTP(order._id)}
+                              disabled={generatingOTP[order._id]}
+                              className="p-2 bg-green-100 hover:bg-green-200 rounded-lg transition-colors disabled:opacity-50"
+                              title="Regenerate OTP"
+                            >
+                              <FaSync
+                                className={`text-green-600 ${
+                                  generatingOTP[order._id] ? "animate-spin" : ""
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleGenerateOTP(order._id)}
+                            disabled={generatingOTP[order._id]}
+                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {generatingOTP[order._id] ? (
+                              <>
+                                <FaSync className="animate-spin" />
+                                <span>Generating OTP...</span>
+                              </>
+                            ) : (
+                              <>
+                                <FaSync />
+                                <span>Generate OTP </span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

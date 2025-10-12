@@ -17,6 +17,16 @@ const DeliveryOrders = ({ deliveryOrders, fetchMyDeals }) => {
         return;
       }
 
+      await submitOtpToBackend(orderId, otpInputs[orderId]);
+    } catch (error) {
+      toast.error("Error verifying OTP");
+    }
+  };
+
+  const submitOtpToBackend = async (orderId, otp) => {
+    try {
+      const token = localStorage.getItem("deliveryToken");
+
       let endpoint = "";
       let successMessage = "";
 
@@ -25,7 +35,7 @@ const DeliveryOrders = ({ deliveryOrders, fetchMyDeals }) => {
         successMessage = "Pickup verified successfully!";
       } else if (activeTab === "deliveryPickedUp") {
         endpoint = `${API_BASE_URL}/order/verify-otp-final-delivery/${orderId}`;
-        successMessage = "OTP verified successfully!";
+        successMessage = "Delivery completed successfully!";
       }
 
       const res = await fetch(endpoint, {
@@ -34,7 +44,7 @@ const DeliveryOrders = ({ deliveryOrders, fetchMyDeals }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ otp: otpInputs[orderId] }),
+        body: JSON.stringify({ otp: otp }),
       });
 
       const data = await res.json();
@@ -45,7 +55,6 @@ const DeliveryOrders = ({ deliveryOrders, fetchMyDeals }) => {
         setShowOtpField({ ...showOtpField, [orderId]: false });
         setOtpInputs({});
 
-        // Only increment delivery count silently for final delivery
         if (activeTab === "deliveryPickedUp") {
           await incrementDeliveryCountSilent();
         }
@@ -67,17 +76,20 @@ const DeliveryOrders = ({ deliveryOrders, fetchMyDeals }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      // Silent increment, no toast here
     } catch (error) {
       console.error("Error updating delivery count:", error);
     }
   };
 
-  const pickingUpOrders = deliveryOrders.filter((o) => o.status === "Picking Up");
+  const pickingUpOrders = deliveryOrders.filter(
+    (o) => o.status === "Picking Up"
+  );
   const deliveryPickedUpOrders = deliveryOrders.filter(
     (o) => o.status === "Delievery Picked Up"
   );
-  const deliveredOrders = deliveryOrders.filter((o) => o.status === "Delivered");
+  const deliveredOrders = deliveryOrders.filter(
+    (o) => o.status === "Delivered"
+  );
 
   const getStatusBadge = (status) => {
     const base = "text-xs font-semibold px-2 py-1 rounded-full";
@@ -91,6 +103,33 @@ const DeliveryOrders = ({ deliveryOrders, fetchMyDeals }) => {
       default:
         return `${base} bg-gray-100 text-gray-800`;
     }
+  };
+
+  const getPaymentBadge = (order) => {
+    if (order.paymentMethod === "online") {
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800 w-fit">
+          💳 Paid Online
+        </span>
+      );
+    }
+
+    if (order.paymentMethod === "cod") {
+      if (order.paymentStatus === "collected") {
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 w-fit">
+            💰 Payment Collected
+          </span>
+        );
+      }
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-orange-100 text-orange-800 w-fit">
+          💵 Payment On Pickup
+        </span>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -152,6 +191,7 @@ const DeliveryOrders = ({ deliveryOrders, fetchMyDeals }) => {
               setOtpInputs={setOtpInputs}
               handleOtpSubmit={handleOtpSubmit}
               getStatusBadge={getStatusBadge}
+              getPaymentBadge={getPaymentBadge}
               activeTab={activeTab}
             />
           ))
@@ -174,6 +214,7 @@ const DeliveryOrderCard = ({
   setOtpInputs,
   handleOtpSubmit,
   getStatusBadge,
+  getPaymentBadge,
   activeTab,
 }) => {
   const isDelivered = activeTab === "delivered";
@@ -182,7 +223,7 @@ const DeliveryOrderCard = ({
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100">
       <div className="p-5">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start mb-2">
           <div className="flex items-center space-x-2">
             <FaUser className="text-gray-500" />
             <h3 className="text-lg font-semibold text-gray-800 truncate">
@@ -191,6 +232,8 @@ const DeliveryOrderCard = ({
           </div>
           <span className={getStatusBadge(order.status)}>{order.status}</span>
         </div>
+
+        <div className="mb-3">{getPaymentBadge(order)}</div>
 
         <div className="mt-4 text-gray-600 space-y-2">
           <div className="flex items-center space-x-2">
@@ -259,15 +302,17 @@ const DeliveryOrderCard = ({
             <div className="flex gap-2">
               <button
                 onClick={() => handleOtpSubmit(order._id)}
-                className="flex-1 bg-gradient-to-r from-orange-400 to-orange-600 text-white py-2 px-4 rounded-lg"
+                className="flex-1 bg-gradient-to-r from-orange-400 to-orange-600 text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all"
               >
-                {activeTab === "pickingUp" ? "Confirm Pickup" : "Confirm Delivery"}
+                {activeTab === "pickingUp"
+                  ? "Confirm Pickup"
+                  : "Confirm Delivery"}
               </button>
               <button
                 onClick={() =>
                   setShowOtpField({ ...showOtpField, [order._id]: false })
                 }
-                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg"
+                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-all"
               >
                 Cancel
               </button>
@@ -280,15 +325,17 @@ const DeliveryOrderCard = ({
                 onClick={() =>
                   setShowOtpField({ ...showOtpField, [order._id]: true })
                 }
-                className="mt-4 w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 px-4 rounded-lg"
+                className="mt-4 w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all"
               >
-                {activeTab === "pickingUp" ? "Verify Pickup" : "Verify Delivery"}
+                {activeTab === "pickingUp"
+                  ? "Verify Pickup"
+                  : "Verify Delivery"}
               </button>
             )}
             {isDelivered && (
               <div className="mt-4">
-                <span className="px-3 py-1 rounded-full bg-green-100 text-green-800">
-                  Successfully Delivered
+                <span className="px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
+                  ✅ Successfully Delivered
                 </span>
               </div>
             )}
@@ -301,6 +348,7 @@ const DeliveryOrderCard = ({
 
 const EmptyState = ({ title, description }) => (
   <div className="col-span-full text-center py-10">
+    <div className="text-5xl mb-3">📭</div>
     <h3 className="text-lg font-medium text-gray-500">{title}</h3>
     <p className="text-gray-400 mt-1">{description}</p>
   </div>

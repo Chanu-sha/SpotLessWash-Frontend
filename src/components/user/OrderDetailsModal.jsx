@@ -1,10 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import { auth } from "../../firebase";
+import axios from "axios";
+import { FiAlertCircle } from "react-icons/fi";
 
 const OrderDetailsModal = ({ service, vendor, onClose, onConfirm }) => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [quantity, setQuantity] = useState(1);
   const [mobile, setMobile] = useState("");
   const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [profileDataMissing, setProfileDataMissing] = useState({
+    mobile: false,
+    address: false,
+  });
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const token = await user.getIdToken();
+          const res = await axios.get(`${API_BASE_URL}/user/profile`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = res.data?.user ?? res.data;
+          
+          if (data.phone) {
+            setMobile(data.phone);
+          } else {
+            setProfileDataMissing(prev => ({ ...prev, mobile: true }));
+          }
+          
+          if (data.address) {
+            setAddress(data.address);
+          } else {
+            setProfileDataMissing(prev => ({ ...prev, address: true }));
+          }
+        } catch (err) {
+          console.error("Failed to load user profile", err);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchUserProfile();
+  }, [API_BASE_URL]);
 
   const calculateTotal = () => service ? service.appPrice * quantity + 50 : 0;
 
@@ -77,6 +118,14 @@ const OrderDetailsModal = ({ service, vendor, onClose, onConfirm }) => {
             <label className="block text-gray-700 mb-2 text-sm font-medium">
               Mobile Number:
             </label>
+            {profileDataMissing.mobile && !mobile && (
+              <div className="mb-2 p-2 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
+                <FiAlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-amber-800">
+                  You haven't added your mobile number in your profile. Please enter it here or add it in your profile.
+                </p>
+              </div>
+            )}
             <input
               type="tel"
               value={mobile}
@@ -84,6 +133,7 @@ const OrderDetailsModal = ({ service, vendor, onClose, onConfirm }) => {
               className="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               placeholder="Enter 10-digit mobile number"
               maxLength={10}
+              disabled={loading}
             />
           </div>
 
@@ -91,12 +141,21 @@ const OrderDetailsModal = ({ service, vendor, onClose, onConfirm }) => {
             <label className="block text-gray-700 mb-2 text-sm font-medium">
               Delivery Address:
             </label>
+            {profileDataMissing.address && !address && (
+              <div className="mb-2 p-2 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
+                <FiAlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-amber-800">
+                  You haven't added your delivery address in your profile. Please enter it here or add it in your profile.
+                </p>
+              </div>
+            )}
             <textarea
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               rows={4}
               placeholder="Enter full delivery address..."
+              disabled={loading}
             />
           </div>
 
@@ -136,8 +195,9 @@ const OrderDetailsModal = ({ service, vendor, onClose, onConfirm }) => {
             <button
               onClick={handleSubmit}
               className="flex-1 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium transition-colors"
+              disabled={loading}
             >
-              Continue
+              {loading ? "Loading..." : "Continue"}
             </button>
           </div>
         </div>
