@@ -24,6 +24,7 @@
     "vite-plugin-pwa": "^1.0.2"
   },
   "dependencies": {
+    "@capacitor/app": "^7.1.0",
     "@capacitor/camera": "^7.0.2",
     "@capacitor/filesystem": "^7.1.4",
     "@capacitor/share": "^7.0.2",
