@@ -1,4 +1,7 @@
-import { Routes, Route } from "react-router-dom";
+import React, { useEffect, useRef } from "react";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { App as CapacitorApp } from "@capacitor/app";
+import { Toast } from "@capacitor/toast";
 
 import Home from "../Pages/Home";
 import Orders from "../Pages/Orders";
@@ -19,7 +22,34 @@ import VendorDashboard from "../Pages/vendor/VendorDashboard";
 import OurServices from "../Pages/static/OurServices";
 import AdminWithdrawalDashboard from "../components/AdminWithdrawalDashboard";
 
-function AppRoutes() {
+function AppRoutesContent() {
+  const navigate = useNavigate();
+  const backPressTime = useRef(0); 
+
+  useEffect(() => {
+    const backListener = CapacitorApp.addListener("backButton", async () => {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        const now = Date.now();
+        if (now - backPressTime.current < 2000) {
+          CapacitorApp.exitApp(); // app exit
+        } else {
+          backPressTime.current = now;
+          await Toast.show({
+            text: "Press back again to exit",
+            duration: "short",
+            position: "bottom"
+          });
+        }
+      }
+    });
+
+    return () => {
+      backListener.remove();
+    };
+  }, [navigate]);
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -44,4 +74,10 @@ function AppRoutes() {
   );
 }
 
-export default AppRoutes;
+export default function AppRoutes() {
+  return (
+    <Router>
+      <AppRoutesContent />
+    </Router>
+  );
+}
