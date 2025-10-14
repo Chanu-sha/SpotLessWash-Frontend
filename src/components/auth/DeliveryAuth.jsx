@@ -355,11 +355,11 @@ const DeliveryAuth = ({
     <div className="min-h-screen">
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-center">
+        <div className="bg-gradient-to-r mt-10  from-orange-500 to-orange-600 p-6 text-center">
           <h2 className="text-2xl font-bold text-white">
             {isRegistering
               ? "Register as Delivery Partner"
-              : "Delivery Partner Login"}
+              : "Welcome Back to Delivery Login"}
           </h2>
         </div>
 

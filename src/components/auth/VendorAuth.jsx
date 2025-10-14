@@ -263,7 +263,7 @@ const VendorAuth = ({
   return (
     <div className="min-h-screen ">
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+        <div className="bg-gradient-to-r mt-10 from-purple-500 to-purple-600 p-6 text-center">
           <h2 className="text-2xl font-bold text-white">
             {isRegistering ? "Register as Vendor" : "Vendor Login"}
           </h2>

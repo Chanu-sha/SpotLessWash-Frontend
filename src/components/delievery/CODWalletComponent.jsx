@@ -6,6 +6,7 @@ import {
   FaMoneyBillWave,
   FaHistory,
   FaExclamationTriangle,
+  FaCheckCircle,
 } from "react-icons/fa";
 
 const CODWalletComponent = ({ isOpen, onClose }) => {
@@ -13,6 +14,7 @@ const CODWalletComponent = ({ isOpen, onClose }) => {
   const [walletData, setWalletData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -58,21 +60,26 @@ const CODWalletComponent = ({ isOpen, onClose }) => {
       return;
     }
 
-    if (!window.confirm(`Submit ₹${walletData?.pendingSubmission} to company account?\n\nYou will be redirected to payment gateway.`)) {
-      return;
-    }
+    setShowConfirmModal(true);
+  };
+
+  const proceedWithPayment = async () => {
+    setShowConfirmModal(false);
 
     try {
       setSubmitting(true);
       const token = localStorage.getItem("deliveryToken");
 
-      const orderResponse = await fetch(`${API_BASE_URL}/deliveryboy/cod-wallet/create-order`, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-      });
+      const orderResponse = await fetch(
+        `${API_BASE_URL}/deliveryboy/cod-wallet/create-order`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!orderResponse.ok) {
         const error = await orderResponse.json();
@@ -84,7 +91,9 @@ const CODWalletComponent = ({ isOpen, onClose }) => {
 
       const res = await loadRazorpayScript();
       if (!res) {
-        toast.error("Razorpay SDK failed to load. Please check your internet connection.");
+        toast.error(
+          "Razorpay SDK failed to load. Please check your internet connection."
+        );
         return;
       }
 
@@ -118,7 +127,7 @@ const CODWalletComponent = ({ isOpen, onClose }) => {
               toast.success(
                 ` Successfully submitted! Receipt: ${verifyData.receiptNumber}`
               );
-              fetchWalletData(); // Refresh wallet data
+              fetchWalletData();
             } else {
               const error = await verifyResponse.json();
               toast.error(error.message || "Payment verification failed");
@@ -171,73 +180,167 @@ const CODWalletComponent = ({ isOpen, onClose }) => {
     daysSinceCollection > 0 && walletData?.pendingSubmission > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <FaWallet className="text-white text-3xl" />
-              <h2 className="text-2xl font-bold text-white">Cash On Pickup Wallet</h2>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mb-16 max-h-[90vh] overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-3">
+                <FaWallet className="text-white text-3xl" />
+                <h2 className="text-2xl font-bold text-white">
+                  Cash On Pickup Wallet
+                </h2>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
+              >
+                <FaTimes className="text-xl" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
-            >
-              <FaTimes className="text-xl" />
-            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 bg-gray-50">
+            {["overview", "collections", "history"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-4 px-6 font-medium transition-all ${
+                  activeTab === tab
+                    ? "bg-white text-orange-600 border-b-2 border-orange-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+              </div>
+            ) : (
+              <>
+                {activeTab === "overview" && (
+                  <OverviewTab
+                    walletData={walletData}
+                    showPenaltyWarning={showPenaltyWarning}
+                    daysSinceCollection={daysSinceCollection}
+                    submitting={submitting}
+                    handleSubmitCollections={handleSubmitCollections}
+                  />
+                )}
+                {activeTab === "collections" && (
+                  <CollectionsTab walletData={walletData} />
+                )}
+                {activeTab === "history" && (
+                  <HistoryTab walletData={walletData} />
+                )}
+              </>
+            )}
           </div>
         </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 bg-gray-50">
-          {["overview", "collections", "history"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-4 px-6 font-medium transition-all ${
-                activeTab === tab
-                  ? "bg-white text-orange-600 border-b-2 border-orange-600"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-220px)]">
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-            </div>
-          ) : (
-            <>
-              {activeTab === "overview" && (
-                <OverviewTab
-                  walletData={walletData}
-                  showPenaltyWarning={showPenaltyWarning}
-                  daysSinceCollection={daysSinceCollection}
-                  submitting={submitting}
-                  handleSubmitCollections={handleSubmitCollections}
-                />
-              )}
-              {activeTab === "collections" && (
-                <CollectionsTab walletData={walletData} />
-              )}
-              {activeTab === "history" && (
-                <HistoryTab walletData={walletData} />
-              )}
-            </>
-          )}
-        </div>
       </div>
-    </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center  p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl scale-[.85] sm:scale-[.8] max-w-md w-full overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="bg-white/20 p-3 rounded-full">
+                  <FaExclamationTriangle className="text-white text-2xl" />
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  Confirm Payment
+                </h3>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <FaMoneyBillWave className="text-yellow-600 text-2xl flex-shrink-0 mt-1" />
+                  <div>
+                    <h4 className="font-bold text-yellow-900 text-lg mb-2">
+                      Important Notice
+                    </h4>
+                    <p className="text-yellow-800 text-sm leading-relaxed">
+                      Please ensure that you have the collected COD cash
+                      available in liquid form (online format) before
+                      proceeding. This amount will be paid to the company
+                      account via online payment gateway.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-700 font-medium">
+                    Amount to Pay:
+                  </span>
+                  <span className="text-2xl font-bold text-orange-600">
+                    ₹{walletData?.pendingSubmission || 0}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  This includes any applicable penalties
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <FaCheckCircle className="text-blue-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-blue-800">
+                    You will be redirected to a secure payment gateway to
+                    complete the transaction
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="p-6 bg-gray-50 border-t flex space-x-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 py-3 px-4 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={proceedWithPayment}
+                disabled={submitting}
+                className={`flex-1 py-3 px-4 font-semibold rounded-lg transition-all ${
+                  submitting
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:shadow-lg"
+                }`}
+              >
+                {submitting ? "Processing..." : "Confirm & Pay"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
-const OverviewTab = ({ walletData, showPenaltyWarning, daysSinceCollection, submitting, handleSubmitCollections }) => (
+const OverviewTab = ({
+  walletData,
+  showPenaltyWarning,
+  daysSinceCollection,
+  submitting,
+  handleSubmitCollections,
+}) => (
   <div className="space-y-6">
     {/* Penalty Warning */}
     {showPenaltyWarning && (
@@ -247,8 +350,8 @@ const OverviewTab = ({ walletData, showPenaltyWarning, daysSinceCollection, subm
           <div>
             <h3 className="font-bold text-red-800 text-lg">Penalty Alert!</h3>
             <p className="text-red-700 mt-1">
-              {daysSinceCollection} day{daysSinceCollection > 1 ? 's' : ''} overdue. 
-              Penalty: ₹{walletData?.penaltyAmount || 0}
+              {daysSinceCollection} day{daysSinceCollection > 1 ? "s" : ""}{" "}
+              overdue. Penalty: ₹{walletData?.penaltyAmount || 0}
             </p>
             <p className="text-sm text-red-600 mt-2">
               ⚠️ Submit collections today to avoid additional charges (₹150/day)
@@ -268,7 +371,9 @@ const OverviewTab = ({ walletData, showPenaltyWarning, daysSinceCollection, subm
       </div>
 
       <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200">
-        <p className="text-sm text-orange-700 font-medium">Pending Submission</p>
+        <p className="text-sm text-orange-700 font-medium">
+          Pending Submission
+        </p>
         <p className="text-3xl font-bold text-orange-800 mt-2">
           ₹{walletData?.pendingSubmission || 0}
         </p>
@@ -294,17 +399,17 @@ const OverviewTab = ({ walletData, showPenaltyWarning, daysSinceCollection, subm
       <div className="flex justify-between items-center">
         <span className="text-gray-600">Last Collection:</span>
         <span className="font-semibold text-gray-800">
-          {walletData?.lastCollectionDate 
-            ? new Date(walletData.lastCollectionDate).toLocaleDateString() 
-            : 'N/A'}
+          {walletData?.lastCollectionDate
+            ? new Date(walletData.lastCollectionDate).toLocaleDateString()
+            : "N/A"}
         </span>
       </div>
       <div className="flex justify-between items-center">
         <span className="text-gray-600">Last Submission:</span>
         <span className="font-semibold text-gray-800">
-          {walletData?.lastSubmissionDate 
-            ? new Date(walletData.lastSubmissionDate).toLocaleDateString() 
-            : 'N/A'}
+          {walletData?.lastSubmissionDate
+            ? new Date(walletData.lastSubmissionDate).toLocaleDateString()
+            : "N/A"}
         </span>
       </div>
     </div>
@@ -316,17 +421,21 @@ const OverviewTab = ({ walletData, showPenaltyWarning, daysSinceCollection, subm
         disabled={submitting}
         className={`w-full py-4 rounded-lg font-bold text-white text-lg transition-all shadow-lg ${
           submitting
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl'
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl"
         }`}
       >
-        {submitting ? 'Processing...' : `Pay ₹${walletData.pendingSubmission} to Company`}
+        {submitting
+          ? "Processing..."
+          : `Pay ₹${walletData.pendingSubmission} to Company`}
       </button>
     )}
 
     {/* Instructions */}
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-      <h4 className="font-semibold text-blue-900 mb-2">📋 Important Instructions:</h4>
+      <h4 className="font-semibold text-blue-900 mb-2">
+        📋 Important Instructions:
+      </h4>
       <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
         <li>Submit Cash On Pickup collections via online payment</li>
         <li>Penalty of ₹150/day applies after collection day</li>
@@ -340,7 +449,7 @@ const OverviewTab = ({ walletData, showPenaltyWarning, daysSinceCollection, subm
 
 const CollectionsTab = ({ walletData }) => {
   const pendingCollections = walletData?.pendingCollections || [];
-  
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
@@ -361,8 +470,12 @@ const CollectionsTab = ({ walletData }) => {
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h4 className="font-semibold text-gray-800">{collection.customerName}</h4>
-                  <p className="text-sm text-gray-600">{collection.customerMobile}</p>
+                  <h4 className="font-semibold text-gray-800">
+                    {collection.customerName}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {collection.customerMobile}
+                  </p>
                 </div>
                 <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-bold">
                   ₹{collection.amount}
@@ -372,11 +485,15 @@ const CollectionsTab = ({ walletData }) => {
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span>Service:</span>
-                  <span className="font-medium text-gray-800">{collection.serviceName}</span>
+                  <span className="font-medium text-gray-800">
+                    {collection.serviceName}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Quantity:</span>
-                  <span className="font-medium text-gray-800">{collection.quantity}</span>
+                  <span className="font-medium text-gray-800">
+                    {collection.quantity}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Collected:</span>
@@ -465,17 +582,25 @@ const HistoryTab = ({ walletData }) => {
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h4 className="font-semibold text-gray-800">{collection.customerName}</h4>
-                    <p className="text-sm text-gray-600">{collection.serviceName}</p>
+                    <h4 className="font-semibold text-gray-800">
+                      {collection.customerName}
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {collection.serviceName}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <span className="font-bold text-green-600">₹{collection.amount}</span>
+                    <span className="font-bold text-green-600">
+                      ₹{collection.amount}
+                    </span>
                     <p className="text-xs text-green-600">✓ Submitted</p>
                   </div>
                 </div>
                 <div className="text-xs text-gray-500">
-                  Collected: {new Date(collection.collectedAt).toLocaleDateString()} | 
-                  Submitted: {new Date(collection.submittedAt).toLocaleDateString()}
+                  Collected:{" "}
+                  {new Date(collection.collectedAt).toLocaleDateString()} |
+                  Submitted:{" "}
+                  {new Date(collection.submittedAt).toLocaleDateString()}
                 </div>
               </div>
             ))}

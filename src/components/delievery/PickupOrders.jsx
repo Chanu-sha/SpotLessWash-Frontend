@@ -218,7 +218,7 @@ const PickupOrders = ({ pickupOrders, fetchMyDeals }) => {
       </div>
 
       {/* Orders Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5  mb-20">
         {(activePickupTab === "pending"
           ? pendingPickupOrders
           : completedPickupOrders

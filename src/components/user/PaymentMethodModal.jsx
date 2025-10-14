@@ -13,34 +13,47 @@ const PaymentMethodModal = ({
     setSelectedMethod(method);
   };
 
-const handleContinue = () => {
-  if (!selectedMethod) return;
+  const handleContinue = () => {
+    if (!selectedMethod) return;
 
-  if (selectedMethod === "online") {
-    onRazorpayPayment();
-  } else if (selectedMethod === "cashOnPickup") {
-    onPaymentMethodSelect("cashOnPickup");
-  }
-};
-
+    if (selectedMethod === "online") {
+      onRazorpayPayment();
+    } else if (selectedMethod === "cashOnPickup") {
+      onPaymentMethodSelect("cashOnPickup");
+    }
+  };
 
   return (
     <div className=" fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 py-0 animate-fadeIn">
-      <div className="bg-white rounded-2xl mb-12 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-slideUp">
+      <div className="bg-white scale-[.75] rounded-2xl mb-16 shadow-2xl max-w-md w-full max-h-[115vh] overflow-y-auto animate-slideUp">
         {/* Header with Gradient */}
-        <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 p-4 text-white">
+        <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 p-4 text-white ">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-bold mb-0.5">Choose Payment Method</h2>
-              <p className="text-orange-100 text-xs">Select how you want to pay</p>
+              <h2 className="text-xl font-bold mb-0.5">
+                Choose Payment Method
+              </h2>
+              <p className="text-orange-100 text-xs">
+                Select how you want to pay
+              </p>
             </div>
             <button
               onClick={onClose}
               disabled={processingPayment}
               className="text-white hover:bg-white/20 rounded-full p-2 transition-all disabled:opacity-50"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -48,7 +61,9 @@ const handleContinue = () => {
           {/* Total Amount */}
           <div className="mt-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
             <div className="flex justify-between items-center">
-              <span className="text-orange-100 text-xs font-medium">Total Amount</span>
+              <span className="text-orange-100 text-xs font-medium">
+                Total Amount
+              </span>
               <div className="text-right">
                 <span className="text-2xl font-bold">₹{totalAmount}</span>
               </div>
@@ -57,7 +72,7 @@ const handleContinue = () => {
         </div>
 
         {/* Payment Options */}
-        <div className="p-4 space-y-3">
+        <div className="p-4  space-y-3">
           {/* Online Payment */}
           <button
             onClick={() => handleMethodSelect("online")}
@@ -86,7 +101,9 @@ const handleContinue = () => {
                   >
                     <svg
                       className={`w-7 h-7 transition-colors ${
-                        selectedMethod === "online" ? "text-white" : "text-blue-600"
+                        selectedMethod === "online"
+                          ? "text-white"
+                          : "text-blue-600"
                       }`}
                       fill="none"
                       stroke="currentColor"
@@ -101,9 +118,15 @@ const handleContinue = () => {
                     </svg>
                   </div>
                   <div className="text-left">
-                    <h3 className="font-bold text-gray-800 text-lg mb-1">Pay Online</h3>
-                    <p className="text-sm text-gray-600">UPI, Wallets (No Cards)</p>
-                    <p className="text-xs text-gray-500 mt-1">Google Pay, PhonePe, Paytm</p>
+                    <h3 className="font-bold text-gray-800 text-lg mb-1">
+                      Pay Online
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      UPI, Wallets (No Cards)
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Google Pay, PhonePe, Paytm
+                    </p>
                     <div className="flex items-center mt-2 space-x-2">
                       <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
                         Instant
@@ -128,7 +151,12 @@ const handleContinue = () => {
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   )}
                 </div>
@@ -167,7 +195,9 @@ const handleContinue = () => {
                   >
                     <svg
                       className={`w-7 h-7 transition-colors ${
-                        selectedMethod === "cashOnPickup" ? "text-white" : "text-green-600"
+                        selectedMethod === "cashOnPickup"
+                          ? "text-white"
+                          : "text-green-600"
                       }`}
                       fill="none"
                       stroke="currentColor"
@@ -182,7 +212,9 @@ const handleContinue = () => {
                     </svg>
                   </div>
                   <div className="text-left">
-                    <h3 className="font-bold text-gray-800 text-lg mb-1">Cash On Pickup</h3>
+                    <h3 className="font-bold text-gray-800 text-lg mb-1">
+                      Cash On Pickup
+                    </h3>
                     <p className="text-sm text-gray-600">Pay when we collect</p>
                     <div className="flex items-center mt-2 space-x-2">
                       <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full">
@@ -208,7 +240,12 @@ const handleContinue = () => {
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   )}
                 </div>
@@ -224,7 +261,12 @@ const handleContinue = () => {
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 animate-slideUp">
               <div className="flex items-start space-x-3">
                 <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -235,7 +277,9 @@ const handleContinue = () => {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-blue-900 text-sm mb-1">
-                    {selectedMethod === "online" ? "Online Payment Benefits" : "Cash On Pickup Info"}
+                    {selectedMethod === "online"
+                      ? "Online Payment Benefits"
+                      : "Cash On Pickup Info"}
                   </h4>
                   <p className="text-xs text-blue-800 leading-relaxed">
                     {selectedMethod === "online"
@@ -286,7 +330,11 @@ const handleContinue = () => {
                 <span>Processing...</span>
               </div>
             ) : (
-              <span>{selectedMethod === "online" ? "Proceed to Pay" : "Confirm Order"}</span>
+              <span>
+                {selectedMethod === "online"
+                  ? "Proceed to Pay"
+                  : "Confirm Order"}
+              </span>
             )}
           </button>
 
@@ -302,7 +350,12 @@ const handleContinue = () => {
         {/* Security Badge */}
         <div className="px-4 pb-4">
           <div className="flex items-center justify-center space-x-2 text-gray-500 text-xs">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

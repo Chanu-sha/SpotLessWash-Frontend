@@ -16,7 +16,7 @@ const AdminAuth = ({ adminCreds, setAdminCreds, API_BASE_URL, navigate }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-10 px-2">
       <Input
         icon={<FiUser />}
         placeholder="Admin Username"
@@ -56,7 +56,7 @@ const PasswordInput = ({ icon, placeholder, value, onChange }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative ">
       <div className="absolute left-3 top-3 text-gray-400">{icon}</div>
       <input
         type={showPassword ? "text" : "password"}

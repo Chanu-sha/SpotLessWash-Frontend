@@ -10,54 +10,104 @@ import { GiClothes } from "react-icons/gi";
 
 export default function FooterNav() {
   const location = useLocation();
-  const { role, loading } = useContext(UserContext);
+  const { role } = useContext(UserContext);
 
-  // Hide footer on admin panel page
-  if (location.pathname === "/admin-panel") {
-    return null;
-  }
-
+  if (location.pathname === "/admin-panel") return null;
 
   const isActive = (path) => location.pathname === path;
 
   const linkClasses = (path) =>
-    `flex flex-col items-center ${
+    `flex flex-col items-center transition-colors duration-200 ${
       isActive(path) ? "text-green-600" : "text-gray-700"
     } hover:text-blue-500`;
 
   const navItems = {
     default: [
       { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
-      { to: "/service", icon: <GiClothes className="w-6 h-6" />, text: "Services" },
-      { to: "/orders", icon: <FaClipboardList className="w-6 h-6" />, text: "Orders" },
-      { to: "/userprofile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+      {
+        to: "/service",
+        icon: <GiClothes className="w-6 h-6" />,
+        text: "Services",
+      },
+      {
+        to: "/orders",
+        icon: <FaClipboardList className="w-6 h-6" />,
+        text: "Orders",
+      },
+      {
+        to: "/userprofile",
+        icon: <PiUserLight className="w-6 h-6" />,
+        text: "Profile",
+      },
     ],
     firebase: [
       { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
-      { to: "/service", icon: <GiClothes className="w-6 h-6" />, text: "Services" },
-      { to: "/orders", icon: <FaClipboardList className="w-6 h-6" />, text: "Orders" },
-      { to: "/userprofile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+      {
+        to: "/service",
+        icon: <GiClothes className="w-6 h-6" />,
+        text: "Services",
+      },
+      {
+        to: "/orders",
+        icon: <FaClipboardList className="w-6 h-6" />,
+        text: "Orders",
+      },
+      {
+        to: "/userprofile",
+        icon: <PiUserLight className="w-6 h-6" />,
+        text: "Profile",
+      },
     ],
     delivery: [
       { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
-      { to: "/delivery-dashboard", icon: <FaTruckFast className="w-6 h-6" />, text: "All Orders" },
-      { to: "/my-deals", icon: <FaClipboardList className="w-6 h-6" />, text: "My Deals" },
-      { to: "/delieveryprofile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+      {
+        to: "/delivery-dashboard",
+        icon: <FaTruckFast className="w-6 h-6" />,
+        text: "All Orders",
+      },
+      {
+        to: "/my-deals",
+        icon: <FaClipboardList className="w-6 h-6" />,
+        text: "My Deals",
+      },
+      {
+        to: "/delieveryprofile",
+        icon: <PiUserLight className="w-6 h-6" />,
+        text: "Profile",
+      },
     ],
     vendor: [
       { to: "/", icon: <GoHomeFill className="w-6 h-6" />, text: "Home" },
-      { to: "/vendor-dashboard", icon: <MdDryCleaning className="w-6 h-6" />, text: "My Orders" },
-      { to: "/vendor-assigned", icon: <GiClothes className="w-6 h-6" />, text: "Assigned" },
-      { to: "/vendorprofile", icon: <PiUserLight className="w-6 h-6" />, text: "Profile" },
+      {
+        to: "/vendor-dashboard",
+        icon: <MdDryCleaning className="w-6 h-6" />,
+        text: "My Orders",
+      },
+      {
+        to: "/vendor-assigned",
+        icon: <GiClothes className="w-6 h-6" />,
+        text: "Assigned",
+      },
+      {
+        to: "/vendorprofile",
+        icon: <PiUserLight className="w-6 h-6" />,
+        text: "Profile",
+      },
     ],
   };
-
 
   const currentNav = navItems[role] || navItems.default;
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 mx-auto max-w-md bg-white shadow-md border-t border-gray-200 z-50">
-      <nav className="flex justify-around items-center h-16 max-w-sm mx-auto">
+    <footer className="fixed bottom-0 left-0 right-0 bg-white shadow-md border-t border-gray-200 z-50">
+      <nav
+        className="
+          flex justify-around items-center h-16
+          max-w-sm mx-auto
+          md:max-w-2xl lg:max-w-4xl xl:max-w-6xl
+          px-2 sm:px-4
+        "
+      >
         {currentNav.map((item) => (
           <Link key={item.to} to={item.to} className={linkClasses(item.to)}>
             {item.icon}

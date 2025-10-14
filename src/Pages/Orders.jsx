@@ -131,7 +131,7 @@ export default function Orders() {
     try {
       setGeneratingOTP({ ...generatingOTP, [orderId]: true });
       const user = auth.currentUser;
-      
+
       if (!user) {
         toast.error("Please login again!");
         return;
@@ -202,7 +202,7 @@ export default function Orders() {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto bg-gradient-to-b from-gray-50 to-gray-100 pb-14">
+    <div className="min-h-screen  bg-gradient-to-b from-gray-50 to-gray-100 pb-14">
       <ToastContainer
         position="top-center"
         autoClose={2000}
@@ -246,7 +246,7 @@ export default function Orders() {
             <RiLoader4Line className="animate-spin text-indigo-500 text-3xl" />
           </div>
         ) : orders[activeTab]?.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ">
             {orders[activeTab].map((order) => (
               <div
                 key={order._id}
@@ -442,9 +442,7 @@ export default function Orders() {
               {/* Show OTP in detail modal if applicable */}
               {shouldShowOTP(selectedOrder.status) && (
                 <div className="border-t border-gray-200 pt-4">
-                  <h3 className="font-medium text-gray-800 mb-2">
-                    Order OTP
-                  </h3>
+                  <h3 className="font-medium text-gray-800 mb-2">Order OTP</h3>
                   <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
                     <p className="text-sm text-indigo-600 font-medium mb-1">
                       Share this OTP with delivery person

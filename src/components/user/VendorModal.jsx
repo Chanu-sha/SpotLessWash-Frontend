@@ -5,8 +5,8 @@ const VendorModal = ({ vendor, onClose, onBookService }) => {
   if (!vendor) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen max-w-md mx-auto bg-black/40 backdrop-blur-sm p-3 sm:p-4">
-      <div className="bg-white mb-14 rounded-lg w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col mx-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen  bg-black/40 backdrop-blur-sm p-3 sm:p-4">
+      <div className="bg-white mb-16 rounded-lg w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col mx-auto">
         <div className="p-4 sm:p-6 border-b">
           <h2 className="text-lg sm:text-xl font-bold mb-2 truncate">
             {vendor.name}

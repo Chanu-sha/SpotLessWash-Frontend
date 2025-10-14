@@ -37,7 +37,7 @@ export default function Header() {
   }
 
   return (
-    <div className="w-full bg-white px-4 py-1.5 flex items-center justify-between text-gray-900 max-w-md mx-auto shadow">
+    <div className="w-full bg-white px-4 py-1.5 flex items-center justify-between text-gray-900  shadow">
       <img
         className="w-20 h-14 object-contain cursor-pointer"
         src="/spotlesswashlogo.png"

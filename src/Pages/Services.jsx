@@ -96,7 +96,6 @@ const Services = () => {
     const totalAmount = orderDetails.total;
 
     try {
-      // Load Razorpay SDK
       const res = await loadRazorpayScript();
       if (!res) {
         throw new Error(
@@ -104,7 +103,6 @@ const Services = () => {
         );
       }
 
-      // Get Firebase token
       const token = await getFirebaseIdToken();
 
       toast.info("Creating payment order...");
@@ -138,7 +136,6 @@ const Services = () => {
         image: "/servicepagepaymentimage.png",
         order_id: order_id,
 
-        // Payment success handler
         handler: async function (response) {
           try {
             toast.info("Verifying payment...");
@@ -218,14 +215,11 @@ const Services = () => {
             setProcessingPayment(false);
             setShowPaymentModal(true);
           },
-          // Escape key closes modal
           escape: true,
-          // Click outside doesn't close modal
           backdropclose: false,
         },
       };
 
-      // Open Razorpay checkout
       const paymentObject = new window.Razorpay(options);
 
       paymentObject.on("payment.failed", function (response) {
@@ -286,7 +280,6 @@ const Services = () => {
         assignedDhobi: selectedVendor._id,
         paymentMethod: paymentMethod,
         paymentId: paymentId,
-        // Set correct payment status based on method
         paymentStatus: paymentMethod === "online" ? "paid" : "pending",
       };
 
@@ -302,7 +295,6 @@ const Services = () => {
 
       toast.success("Order placed successfully!");
 
-      // Reset all states
       setTimeout(() => {
         setShowPaymentModal(false);
         setShowOrderModal(false);
@@ -386,7 +378,7 @@ const Services = () => {
       <>
         <style>{styles}</style>
         <div className="min-h-screen bg-gray-50 px-3 sm:px-4 py-4 sm:py-6">
-          <div className="max-w-md mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="bg-white shadow-sm rounded-lg p-4 mb-4 animate-pulse">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
@@ -396,8 +388,8 @@ const Services = () => {
                 <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
               </div>
             </div>
-            <div className="space-y-4 sm:space-y-5">
-              {[1, 2, 3].map((item) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
                 <VendorSkeleton key={item} />
               ))}
             </div>
@@ -434,7 +426,7 @@ const Services = () => {
   return (
     <>
       <style>{styles}</style>
-      <div className="min-h-screen max-w-md mx-auto bg-gray-50 pb-16 sm:pb-20">
+      <div className="min-h-screen bg-gray-50 pb-16 sm:pb-20">
         <ToastContainer
           position="top-center"
           autoClose={3000}
@@ -477,134 +469,136 @@ const Services = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-4 sm:space-y-5">
-              {vendors.map((vendor) => {
-                const showAll = expandedVendors[vendor._id] || false;
+            <div className="max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                {vendors.map((vendor) => {
+                  const showAll = expandedVendors[vendor._id] || false;
 
-                return (
-                  <div
-                    key={vendor._id}
-                    className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-200"
-                  >
-                    <ImageCarousel
-                      images={vendor.storeImages}
-                      vendorName={vendor.name}
-                    />
+                  return (
+                    <div
+                      key={vendor._id}
+                      className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-200 flex flex-col"
+                    >
+                      <ImageCarousel
+                        images={vendor.storeImages}
+                        vendorName={vendor.name}
+                      />
 
-                    <div className="p-3 sm:p-4">
-                      <div className="flex justify-between items-start mb-2 sm:mb-3">
-                        <h2 className="text-base sm:text-lg font-bold text-gray-800 truncate flex-1 pr-2">
-                          {vendor.name}
-                        </h2>
-                        <div className="flex items-center bg-green-50 px-2 py-1 rounded flex-shrink-0">
-                          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1"></span>
-                          <span className="text-xs font-medium text-green-700">
-                            Approved
-                          </span>
-                        </div>
-                      </div>
-
-                      {vendor.address && (
-                        <div className="flex items-center text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
-                          <svg
-                            className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                          </svg>
-                          <span className="truncate">{vendor.address}</span>
-                        </div>
-                      )}
-
-                      {vendor.services && vendor.services.length > 0 ? (
-                        <div>
-                          <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2 border-b pb-1">
-                            Services
-                          </h3>
-                          <div className="space-y-2 sm:space-y-3">
-                            {(showAll
-                              ? vendor.services
-                              : vendor.services.slice(0, 3)
-                            ).map((service, index) => (
-                              <div
-                                key={index}
-                                className="flex justify-between items-start"
-                              >
-                                <div className="flex-1 pr-2 min-w-0">
-                                  <span className="font-medium text-gray-800 text-sm sm:text-base block truncate">
-                                    {service.name}
-                                  </span>
-                                  {service.description && (
-                                    <p className="text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
-                                      {service.description}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex flex-col items-end flex-shrink-0">
-                                  <div className="flex items-center space-x-1 mb-1">
-                                    <span className="text-xs text-gray-400 line-through">
-                                      ₹{service.displayPrice}
-                                    </span>
-                                    <span className="bg-green-100 text-green-700 text-xs px-1 py-0.5 rounded font-medium">
-                                      {service.discountPercentage}% OFF
-                                    </span>
-                                  </div>
-                                  <span className="font-semibold text-orange-600 whitespace-nowrap text-sm sm:text-base">
-                                    ₹{service.appPrice}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-
-                            {vendor.services.length > 3 && !showAll && (
-                              <button
-                                className="text-xs text-blue-500 font-medium mt-1"
-                                onClick={() =>
-                                  setExpandedVendors((prev) => ({
-                                    ...prev,
-                                    [vendor._id]: true,
-                                  }))
-                                }
-                              >
-                                +{vendor.services.length - 3} more services
-                              </button>
-                            )}
+                      <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                        <div className="flex justify-between items-start mb-2 sm:mb-3">
+                          <h2 className="text-base sm:text-lg font-bold text-gray-800 truncate flex-1 pr-2">
+                            {vendor.name}
+                          </h2>
+                          <div className="flex items-center bg-green-50 px-2 py-1 rounded flex-shrink-0">
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1"></span>
+                            <span className="text-xs font-medium text-green-700">
+                              Approved
+                            </span>
                           </div>
                         </div>
-                      ) : (
-                        <div className="text-center py-2 sm:py-3 bg-gray-50 rounded-md">
-                          <p className="text-xs text-gray-500">
-                            No services listed yet
-                          </p>
-                        </div>
-                      )}
 
-                      <button
-                        onClick={() => {
-                          setSelectedVendor(vendor);
-                          setShowVendorModal(true);
-                        }}
-                        className="w-full mt-3 sm:mt-4 py-2 sm:py-2.5 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 transition-colors"
-                      >
-                        Get Services
-                      </button>
+                        {vendor.address && (
+                          <div className="flex items-center text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
+                            <svg
+                              className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                            <span className="truncate">{vendor.address}</span>
+                          </div>
+                        )}
+
+                        {vendor.services && vendor.services.length > 0 ? (
+                          <div className="flex-1">
+                            <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2 border-b pb-1">
+                              Services
+                            </h3>
+                            <div className="space-y-2 sm:space-y-3">
+                              {(showAll
+                                ? vendor.services
+                                : vendor.services.slice(0, 3)
+                              ).map((service, index) => (
+                                <div
+                                  key={index}
+                                  className="flex justify-between items-start"
+                                >
+                                  <div className="flex-1 pr-2 min-w-0">
+                                    <span className="font-medium text-gray-800 text-sm sm:text-base block truncate">
+                                      {service.name}
+                                    </span>
+                                    {service.description && (
+                                      <p className="text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
+                                        {service.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col items-end flex-shrink-0">
+                                    <div className="flex items-center space-x-1 mb-1">
+                                      <span className="text-xs text-gray-400 line-through">
+                                        ₹{service.displayPrice}
+                                      </span>
+                                      <span className="bg-green-100 text-green-700 text-xs px-1 py-0.5 rounded font-medium">
+                                        {service.discountPercentage}% OFF
+                                      </span>
+                                    </div>
+                                    <span className="font-semibold text-orange-600 whitespace-nowrap text-sm sm:text-base">
+                                      ₹{service.appPrice}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+
+                              {vendor.services.length > 3 && !showAll && (
+                                <button
+                                  className="text-xs text-blue-500 font-medium mt-1"
+                                  onClick={() =>
+                                    setExpandedVendors((prev) => ({
+                                      ...prev,
+                                      [vendor._id]: true,
+                                    }))
+                                  }
+                                >
+                                  +{vendor.services.length - 3} more services
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-2 sm:py-3 bg-gray-50 rounded-md flex-1 flex items-center justify-center">
+                            <p className="text-xs text-gray-500">
+                              No services listed yet
+                            </p>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setSelectedVendor(vendor);
+                            setShowVendorModal(true);
+                          }}
+                          className="w-full mt-3 sm:mt-4 py-2 sm:py-2.5 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 transition-colors"
+                        >
+                          Get Services
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

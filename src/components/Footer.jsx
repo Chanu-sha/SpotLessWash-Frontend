@@ -2,11 +2,22 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="text-gray-800 py-8 px-2 border-t border-gray-200 max-w-sm mx-auto">
-      <div className="flex flex-col gap-6 items-center text-sm">
-
+    <footer className="text-gray-800 py-8 px-4 border-t border-gray-200 bg-white">
+      <div
+        className="
+          max-w-sm mx-auto
+          md:max-w-2xl lg:max-w-4xl xl:max-w-6xl
+          flex flex-col gap-6 items-center text-sm
+          md:items-start
+        "
+      >
         {/* Links */}
-        <div className="flex flex-col items-center gap-4 text-center">
+        <div
+          className="
+            flex flex-col items-center gap-4 text-center
+            md:flex-row md:flex-wrap md:justify-between md:w-full md:text-left
+          "
+        >
           <div className="flex gap-6">
             <Link to="/about" className="hover:text-blue-600 font-medium">
               About Us
@@ -15,6 +26,7 @@ export default function Footer() {
               Our Services
             </Link>
           </div>
+
           <div className="flex gap-6">
             <Link to="/privacy" className="hover:text-blue-600 font-medium">
               Privacy Policy
@@ -23,13 +35,14 @@ export default function Footer() {
               Terms & Conditions
             </Link>
           </div>
+
           <Link to="/contact" className="hover:text-blue-600 font-medium">
             Contact Us
           </Link>
         </div>
 
         {/* Copyright */}
-        <div className="text-gray-500 text-center">
+        <div className="text-gray-500 text-center md:text-left w-full">
           &copy; 2025 Spot Less Wash. All rights reserved.
         </div>
       </div>

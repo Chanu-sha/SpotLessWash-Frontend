@@ -164,7 +164,7 @@ const DeliveryDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto bg-gray-50 pb-20 p-4 md:p-6">
+    <div className="min-h-screen  bg-gray-50 pb-20 p-4 md:p-6">
       <ToastContainer position="top-center" autoClose={2000} theme="colored" />
 
       {/* Confirmation Popup */}

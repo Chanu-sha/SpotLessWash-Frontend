@@ -72,7 +72,7 @@ const AdminPanel = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success("✅ User Approved Successfully!");
+        toast.success(" User Approved Successfully!");
         fetchData(activeRole, activeTab);
       } else {
         toast.error(data.message || "Failed to approve user");
@@ -92,7 +92,7 @@ const AdminPanel = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success("❌ User Rejected");
+        toast.success(" User Rejected");
         fetchData(activeRole, activeTab);
       } else {
         toast.error(data.message || "Failed to reject user");
@@ -125,10 +125,10 @@ const AdminPanel = () => {
         const result = await Filesystem.writeFile({
           path: filename,
           data: base64,
-          directory: Directory.Documents, // या Directory.External भी use कर सकते हैं
+          directory: Directory.Documents,
         });
 
-        toast.success("📥 Image downloaded successfully!");
+        toast.success(" Image downloaded successfully!");
 
         // Optional: Share the downloaded file
         try {
@@ -153,7 +153,7 @@ const AdminPanel = () => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
-        toast.success("📥 Image downloaded successfully!");
+        toast.success(" Image downloaded successfully!");
       }
     } catch (error) {
       toast.error("Failed to download image");
@@ -243,7 +243,7 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <ToastContainer
         position="top-center"
         autoClose={3000}
@@ -281,12 +281,12 @@ const AdminPanel = () => {
 
       {/* Header */}
       <header className="bg-white shadow-lg sticky top-0 z-10 border-b border-gray-200">
-        <div className="px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <div className="px-4 md:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="text-center md:text-left">
+            <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Admin Dashboard
             </h1>
-            <p className="text-center text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               Manage users and approvals
             </p>
           </div>
@@ -294,7 +294,7 @@ const AdminPanel = () => {
           {/* Manage Payments Button */}
           <button
             onClick={() => navigate("/admin-Withdrawl-Dashboard")}
-            className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-2 rounded-lg shadow hover:opacity-90 transition-all"
+            className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg shadow hover:opacity-90 transition-all"
           >
             <FaMoneyBillWave size={18} />
             <span className="text-sm font-semibold">Manage Payments</span>
@@ -333,9 +333,9 @@ const AdminPanel = () => {
       </header>
 
       {/* Main Content */}
-      <main className="p-4 pb-6">
+      <main className="p-4 md:p-6 lg:p-8 pb-6 max-w-7xl mx-auto">
         {/* Status Tabs */}
-        <div className="flex space-x-3 mb-6 overflow-x-auto pb-2">
+        <div className="flex flex-wrap gap-3 mb-6">
           {[
             { key: "all", label: "All Users", icon: "👥", color: "slate" },
             { key: "requests", label: "Pending", icon: "⏳", color: "orange" },
@@ -366,10 +366,10 @@ const AdminPanel = () => {
           </div>
         )}
 
-        {/* Cards */}
-        <div className="space-y-4">
+        {/* Cards Grid - Responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
           {!loading && users.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm p-8 text-center border border-gray-100">
+            <div className="col-span-full bg-white rounded-2xl shadow-sm p-8 text-center border border-gray-100">
               <div className="text-4xl mb-4">📭</div>
               <p className="text-gray-500 font-medium">No users found</p>
               <p className="text-gray-400 text-sm mt-1">
@@ -387,16 +387,16 @@ const AdminPanel = () => {
                   key={user._id}
                   className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-md ${
                     isExpanded ? "ring-2 ring-blue-100" : ""
-                  }`}
+                  } flex flex-col`}
                 >
-                  <div className="p-5">
+                  <div className="p-5 flex-1">
                     <div className="flex items-start space-x-4">
                       {/* Profile Avatar / Photo */}
                       {user.photo || user.livePhoto ? (
                         <img
                           src={user.photo || user.livePhoto}
                           alt={user.name}
-                          className="w-14 h-14 rounded-full object-cover shadow-sm border"
+                          className="w-14 h-14 rounded-full object-cover shadow-sm border flex-shrink-0"
                         />
                       ) : (
                         <div
@@ -409,14 +409,14 @@ const AdminPanel = () => {
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-start gap-2">
                           <div className="min-w-0 flex-1">
                             <h3 className="font-bold text-gray-900 text-lg truncate">
                               {user.name}
                             </h3>
-                            <p className="text-gray-600 text-sm mt-1 flex items-center">
+                            <p className="text-gray-600 text-sm mt-1 flex items-center truncate">
                               <span className="mr-2">📧</span>
-                              {user.email}
+                              <span className="truncate">{user.email}</span>
                             </p>
                             <p className="text-gray-600 text-sm mt-1 flex items-center">
                               <span className="mr-2">📱</span>
@@ -424,17 +424,17 @@ const AdminPanel = () => {
                             </p>
                           </div>
 
-                          <div className="flex flex-col space-y-2 ml-4">
+                          <div className="flex flex-col space-y-2 flex-shrink-0">
                             {user.approved ? (
-                              <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">
-                                Approved
+                              <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                                ✓ Approved
                               </span>
                             ) : user.rejected ? (
-                              <span className="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full">
+                              <span className="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
                                 ❌ Rejected
                               </span>
                             ) : (
-                              <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full">
+                              <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
                                 ⏳ Pending
                               </span>
                             )}
@@ -442,34 +442,34 @@ const AdminPanel = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex space-x-2 mt-4">
+                        <div className="flex gap-2 mt-4">
                           {user.approved ? (
                             <button
                               onClick={() => handleReject(user._id)}
-                              className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm flex items-center justify-center space-x-2"
+                              className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm"
                             >
-                              <span>Reject User</span>
+                              Reject User
                             </button>
                           ) : user.rejected ? (
                             <button
                               onClick={() => handleApprove(user._id)}
-                              className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm flex items-center justify-center space-x-2"
+                              className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm"
                             >
-                              <span>Approve User</span>
+                              Approve User
                             </button>
                           ) : (
                             <>
                               <button
                                 onClick={() => handleApprove(user._id)}
-                                className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm flex items-center justify-center space-x-2"
+                                className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm"
                               >
-                                <span>Approve</span>
+                                Approve
                               </button>
                               <button
                                 onClick={() => handleReject(user._id)}
-                                className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm flex items-center justify-center space-x-2"
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm"
                               >
-                                <span>Reject</span>
+                                Reject
                               </button>
                             </>
                           )}
@@ -487,7 +487,7 @@ const AdminPanel = () => {
                               <span className="mr-2">🆔</span>
                               User ID:
                             </span>
-                            <span className="text-gray-600 text-xs font-mono bg-white px-2 py-1 rounded border">
+                            <span className="text-gray-600 text-xs font-mono bg-white px-2 py-1 rounded border truncate max-w-[180px]">
                               {user._id}
                             </span>
                           </div>
@@ -613,7 +613,7 @@ const AdminPanel = () => {
                                         <h4 className="font-semibold text-gray-800">
                                           {service.name}
                                         </h4>
-                                        <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">
+                                        <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
                                           ₹{service.basePrice}
                                         </span>
                                       </div>
@@ -635,7 +635,7 @@ const AdminPanel = () => {
                             <div className="flex items-center space-x-2">
                               {user.approved ? (
                                 <span className="bg-green-500 text-white text-sm px-3 py-1 rounded-full font-medium">
-                                  Active & Approved
+                                  ✓ Active & Approved
                                 </span>
                               ) : user.rejected ? (
                                 <span className="bg-red-500 text-white text-sm px-3 py-1 rounded-full font-medium">

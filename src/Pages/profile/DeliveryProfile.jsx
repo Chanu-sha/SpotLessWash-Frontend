@@ -409,14 +409,14 @@ export default function DeliveryProfile() {
                 onClick={() => navigate("/delivery-dashboard")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-600 hover:to-purple-600 transition shadow-md"
               >
-                🚚 Go to Delivery Dashboard
+                Go to Delivery Dashboard
               </button>
 
               <button
                 onClick={() => navigate("/contact")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 transition shadow-md"
               >
-                🎧 Contact Us
+                 Contact Us 🎧
               </button>
             </div>
           )}
@@ -425,7 +425,7 @@ export default function DeliveryProfile() {
 
       {/* Password Reset Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0  bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-sm w-full max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-800">Change Password</h2>

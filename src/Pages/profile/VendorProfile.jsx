@@ -9,6 +9,9 @@ import {
   FiEye,
   FiEyeOff,
   FiLock,
+  FiX,
+  FiChevronDown,
+  FiChevronUp,
 } from "react-icons/fi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,11 +24,16 @@ export default function VendorProfile() {
   const [profile, setProfile] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [uploadingPercent, setUploadingPercent] = useState(0);
-  const [showServices, setShowServices] = useState(false);
-  const [editingService, setEditingService] = useState(null);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+
+  // Popup States
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteServiceId, setDeleteServiceId] = useState(null);
+  const [editingService, setEditingService] = useState(null);
+  const [showServices, setShowServices] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -169,7 +177,11 @@ export default function VendorProfile() {
 
   // ---- Services ----
   const handleAddService = async () => {
-    if (!serviceForm.name || !serviceForm.description || !serviceForm.basePrice) {
+    if (
+      !serviceForm.name ||
+      !serviceForm.description ||
+      !serviceForm.basePrice
+    ) {
       return toast.error("All service fields are required");
     }
 
@@ -187,6 +199,7 @@ export default function VendorProfile() {
 
       setProfile((prev) => ({ ...prev, services: res.data.services }));
       setServiceForm({ name: "", description: "", basePrice: "" });
+      setShowServiceModal(false);
       toast.success("Service added successfully!");
     } catch (err) {
       console.error(err);
@@ -195,7 +208,11 @@ export default function VendorProfile() {
   };
 
   const handleUpdateService = async (serviceId) => {
-    if (!serviceForm.name || !serviceForm.description || !serviceForm.basePrice) {
+    if (
+      !serviceForm.name ||
+      !serviceForm.description ||
+      !serviceForm.basePrice
+    ) {
       return toast.error("All service fields are required");
     }
 
@@ -212,6 +229,7 @@ export default function VendorProfile() {
       setProfile((prev) => ({ ...prev, services: res.data.services }));
       setEditingService(null);
       setServiceForm({ name: "", description: "", basePrice: "" });
+      setShowServiceModal(false);
       toast.success("Service updated successfully!");
     } catch (err) {
       console.error(err);
@@ -219,19 +237,19 @@ export default function VendorProfile() {
     }
   };
 
-  const handleDeleteService = async (serviceId) => {
-    if (!confirm("Are you sure you want to delete this service?")) return;
-
+  const handleDeleteService = async () => {
     try {
       const token = getToken();
       if (!token) return;
 
       const res = await axios.delete(
-        `${API_BASE_URL}/vendor/services/${serviceId}`,
+        `${API_BASE_URL}/vendor/services/${deleteServiceId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setProfile((prev) => ({ ...prev, services: res.data.services }));
+      setDeleteServiceId(null);
+      setShowDeleteModal(false);
       toast.success("Service deleted successfully!");
     } catch (err) {
       console.error(err);
@@ -311,8 +329,6 @@ export default function VendorProfile() {
   };
 
   const handleStoreImageDelete = async (index) => {
-    if (!confirm("Are you sure you want to delete this image?")) return;
-
     try {
       const token = getToken();
       const res = await axios.delete(
@@ -378,6 +394,7 @@ export default function VendorProfile() {
       description: service.description,
       basePrice: service.basePrice.toString(),
     });
+    setShowServiceModal(true);
   };
 
   // ---- Logout ----
@@ -449,6 +466,172 @@ export default function VendorProfile() {
     </div>
   );
 
+  // ---- Service Modal ----
+  const ServiceModal = () => (
+    <>
+      {showServiceModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl md:rounded-xl w-full md:max-w-md max-h-[85vh] mb-16 overflow-y-auto animate-slide-up md:animate-fade-in">
+            {/* Header */}
+            <div className="sticky top-0 bg-white flex justify-between items-center p-4 border-b border-gray-200 rounded-t-3xl md:rounded-t-xl">
+              <h3 className="text-lg font-semibold">
+                {editingService ? "Edit Service" : "Add New Service"}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowServiceModal(false);
+                  setEditingService(null);
+                  setServiceForm({ name: "", description: "", basePrice: "" });
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Content */}
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter service name"
+                  value={serviceForm.name}
+                  onChange={(e) =>
+                    setServiceForm({
+                      ...serviceForm,
+                      name: e.target.value,
+                    })
+                  }
+                  className="w-full text-sm p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Enter service description"
+                  value={serviceForm.description}
+                  onChange={(e) =>
+                    setServiceForm({
+                      ...serviceForm,
+                      description: e.target.value,
+                    })
+                  }
+                  className="w-full text-sm p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Base Price (₹)
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter price"
+                  value={serviceForm.basePrice}
+                  onChange={(e) =>
+                    setServiceForm({
+                      ...serviceForm,
+                      basePrice: e.target.value,
+                    })
+                  }
+                  className="w-full text-sm p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-2 pt-4">
+                {editingService ? (
+                  <>
+                    <button
+                      onClick={() => handleUpdateService(editingService)}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                    >
+                      Update Service
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowServiceModal(false);
+                        setEditingService(null);
+                        setServiceForm({
+                          name: "",
+                          description: "",
+                          basePrice: "",
+                        });
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handleAddService}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                  >
+                    Add Service
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  // ---- Delete Modal ----
+  const DeleteModal = () => (
+    <>
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl mb-28 md:rounded-xl w-full md:max-w-sm animate-slide-up md:animate-fade-in">
+            {/* Content */}
+            <div className="p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-red-100 p-4 rounded-full">
+                  <FiTrash2 className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Delete Service?
+              </h3>
+              <p className="text-gray-600 text-sm mb-6">
+                This action cannot be undone. The service will be permanently
+                deleted.
+              </p>
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteServiceId(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteService}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   // ---- Loading ----
   if (!profile)
     return (
@@ -464,9 +647,37 @@ export default function VendorProfile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-50 px-4 pt-6 pb-24">
+      <style>{`
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+      `}</style>
       <ToastContainer position="top-center" autoClose={2000} theme="colored" />
 
-      <div className="bg-white rounded-xl shadow-lg max-w-md mx-auto overflow-hidden">
+      <div className="bg-white rounded-xl shadow-lg max-w-md mx-auto overflow-hidden lg:max-w-2xl">
         {/* Header */}
         <div className="p-4 flex justify-between items-center border-b border-gray-200">
           <h1 className="text-lg font-semibold text-gray-800">
@@ -570,98 +781,44 @@ export default function VendorProfile() {
                 <h2 className="text-gray-500 font-semibold uppercase text-xs">
                   Services ({profile.services?.length || 0})
                 </h2>
-                <button
-                  onClick={() => setShowServices(!showServices)}
-                  className="text-blue-600 text-xs hover:underline"
-                >
-                  {showServices ? "Hide" : "Manage Services"}
-                </button>
+                {profile.services && profile.services.length > 0 && (
+                  <button
+                    onClick={() => setShowServices(!showServices)}
+                    className="text-blue-600 text-xs hover:underline flex items-center gap-1"
+                  >
+                    {showServices ? (
+                      <>
+                        <FiChevronUp className="h-3 w-3" />
+                        Hide Services
+                      </>
+                    ) : (
+                      <>
+                        <FiChevronDown className="h-3 w-3" />
+                        Manage Services
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
-              {showServices && (
-                <div className="space-y-3 border-t pt-3">
-                  {/* Add/Edit Service Form */}
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <h3 className="text-sm font-medium mb-2">
-                      {editingService ? "Edit Service" : "Add New Service"}
-                    </h3>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        placeholder="Service name"
-                        value={serviceForm.name}
-                        onChange={(e) =>
-                          setServiceForm({
-                            ...serviceForm,
-                            name: e.target.value,
-                          })
-                        }
-                        className="w-full text-sm p-2 border rounded focus:outline-none focus:border-blue-500"
-                      />
-                      <textarea
-                        placeholder="Service description"
-                        value={serviceForm.description}
-                        onChange={(e) =>
-                          setServiceForm({
-                            ...serviceForm,
-                            description: e.target.value,
-                          })
-                        }
-                        className="w-full text-sm p-2 border rounded focus:outline-none focus:border-blue-500 resize-none"
-                        rows={2}
-                      />
-                      <input
-                        type="number"
-                        placeholder="Price (₹)"
-                        value={serviceForm.basePrice}
-                        onChange={(e) =>
-                          setServiceForm({
-                            ...serviceForm,
-                            basePrice: e.target.value,
-                          })
-                        }
-                        className="w-full text-sm p-2 border rounded focus:outline-none focus:border-blue-500"
-                      />
-                      <div className="flex gap-2">
-                        {editingService ? (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleUpdateService(editingService)
-                              }
-                              className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            >
-                              Update Service
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingService(null);
-                                setServiceForm({
-                                  name: "",
-                                  description: "",
-                                  basePrice: "",
-                                });
-                              }}
-                              className="text-xs px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={handleAddService}
-                            className="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                          >
-                            Add Service
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+              <button
+                onClick={() => {
+                  setShowServiceModal(true);
+                  setEditingService(null);
+                  setServiceForm({ name: "", description: "", basePrice: "" });
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm"
+              >
+                <FiPlus className="w-4 h-4" />
+                Add Service
+              </button>
 
-                  {/* Services List */}
-                  <div className="space-y-2">
-                    {profile.services?.map((service) => (
+              {/* Services List - Only shown when expanded */}
+              {showServices &&
+                profile.services &&
+                profile.services.length > 0 && (
+                  <div className="space-y-2 mt-4 animate-fade-in">
+                    {profile.services.map((service) => (
                       <div
                         key={service._id}
                         className="bg-white border rounded-lg p-3"
@@ -683,21 +840,23 @@ export default function VendorProfile() {
                               onClick={() => editService(service)}
                               className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                             >
-                              <FiEdit2 className="h-3 w-3" />
+                              <FiEdit2 className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteService(service._id)}
+                              onClick={() => {
+                                setDeleteServiceId(service._id);
+                                setShowDeleteModal(true);
+                              }}
                               className="p-1 text-red-600 hover:bg-red-50 rounded"
                             >
-                              <FiTrash2 className="h-3 w-3" />
+                              <FiTrash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
             </div>
           )}
 
@@ -723,7 +882,7 @@ export default function VendorProfile() {
                     <div className="absolute bottom-1 right-1 flex gap-2">
                       <label
                         htmlFor={`store-image-${index}`}
-                        className="cursor-pointer bg-white p-1.5 rounded-full shadow-md"
+                        className="cursor-pointer bg-white p-1.5 rounded-full shadow-md hover:bg-gray-50"
                       >
                         <FiEdit2 className="text-blue-600 w-4 h-4" />
                       </label>
@@ -736,7 +895,7 @@ export default function VendorProfile() {
                       />
                       <button
                         onClick={() => handleStoreImageDelete(index)}
-                        className="bg-white p-1.5 rounded-full shadow-md"
+                        className="bg-white p-1.5 rounded-full shadow-md hover:bg-gray-50"
                       >
                         <FiTrash2 className="text-red-600 w-4 h-4" />
                       </button>
@@ -745,7 +904,7 @@ export default function VendorProfile() {
                 ))}
 
                 {profile.storeImages?.length < 3 && (
-                  <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500">
+                  <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
                     <FiPlus className="text-gray-500 w-6 h-6" />
                     <input
                       type="file"
@@ -846,7 +1005,7 @@ export default function VendorProfile() {
 
                   <button
                     onClick={handlePasswordReset}
-                    className="w-full text-sm py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    className="w-full text-sm py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
                     Update Password
                   </button>
@@ -870,19 +1029,23 @@ export default function VendorProfile() {
                 onClick={() => navigate("/dhobi-dashboard")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-600 hover:to-purple-600 transition shadow-md"
               >
-                🧺 Go to Vendor Dashboard
+                Go to Vendor Dashboard
               </button>
 
               <button
                 onClick={() => navigate("/contact")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 transition shadow-md"
               >
-                🎧 Contact Us
+                Contact Us 🎧
               </button>
             </div>
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <ServiceModal />
+      <DeleteModal />
     </div>
   );
 }
