@@ -1,5 +1,10 @@
 import React, { useEffect, useRef } from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Toast } from "@capacitor/toast";
 
@@ -24,7 +29,7 @@ import AdminWithdrawalDashboard from "../components/AdminWithdrawalDashboard";
 
 function AppRoutesContent() {
   const navigate = useNavigate();
-  const backPressTime = useRef(0); 
+  const backPressTime = useRef(0);
 
   useEffect(() => {
     const backListener = CapacitorApp.addListener("backButton", async () => {
@@ -39,7 +44,7 @@ function AppRoutesContent() {
           await Toast.show({
             text: "Press back again to exit",
             duration: "short",
-            position: "bottom"
+            position: "bottom",
           });
         }
       }
@@ -55,7 +60,10 @@ function AppRoutesContent() {
       <Route path="/" element={<Home />} />
       <Route path="/auth" element={<AuthComponent />} />
       <Route path="/admin-panel" element={<AdminPanel />} />
-      <Route path="/admin-Withdrawl-Dashboard" element={<AdminWithdrawalDashboard />} />
+      <Route
+        path="/admin-Withdrawl-Dashboard"
+        element={<AdminWithdrawalDashboard />}
+      />
       <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
       <Route path="/vendor-dashboard" element={<VendorDashboard />} />
       <Route path="/service" element={<VendorServices />} />
@@ -75,9 +83,5 @@ function AppRoutesContent() {
 }
 
 export default function AppRoutes() {
-  return (
-    <Router>
-      <AppRoutesContent />
-    </Router>
-  );
+  return <AppRoutesContent />;
 }
