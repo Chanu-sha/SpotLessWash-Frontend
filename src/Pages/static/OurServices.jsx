@@ -280,9 +280,6 @@ export default function OurServices() {
           >
             Book Pickup Now
           </button>
-          <p className="text-blue-200 text-xs lg:text-sm mt-3">
-            Free pickup & delivery • No minimum order • Cancel anytime
-          </p>
         </div>
 
         {/* ---------------- TESTIMONIAL ---------------- */}
